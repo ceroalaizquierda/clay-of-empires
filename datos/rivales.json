@@ -1,0 +1,103 @@
+{
+ "_info": "Personalidades de la máquina (perillas).",
+ "personalidades": {
+  "equilibrado": {
+   "nombre": "Equilibrado",
+   "desc": "Ejército mixto, ataca a ritmo parejo.",
+   "economia": 0.5,
+   "primerAtaque": 100,
+   "tamMin": 7,
+   "intervalo": 70,
+   "mezcla": {
+    "enemigo": 0.4,
+    "samurai": 0.25,
+    "samurai_jinete": 0.15,
+    "arquero": 0.2
+   },
+   "objetivo": "centro",
+   "retirada": 0.25,
+   "defensa": 0.2,
+   "militar": 0.5,
+   "asedio": 0.5,
+   "primerAtaqueClasico": 330
+  },
+  "apurado": {
+   "nombre": "Apurado",
+   "desc": "Ataca temprano y seguido con tropas baratas. No se retira.",
+   "economia": 0.15,
+   "primerAtaque": 45,
+   "tamMin": 4,
+   "intervalo": 35,
+   "mezcla": {
+    "enemigo": 0.7,
+    "samurai": 0.1,
+    "arquero": 0.2
+   },
+   "objetivo": "ejercito",
+   "retirada": 0,
+   "defensa": 0,
+   "militar": 0.85,
+   "asedio": 0.25,
+   "primerAtaqueClasico": 210
+  },
+  "economista": {
+   "nombre": "Economista",
+   "desc": "Crece mucho y llega tarde con un ejército grande y caro.",
+   "economia": 0.9,
+   "primerAtaque": 210,
+   "tamMin": 14,
+   "intervalo": 120,
+   "mezcla": {
+    "enemigo": 0.1,
+    "samurai": 0.4,
+    "samurai_jinete": 0.3,
+    "arquero": 0.2
+   },
+   "objetivo": "centro",
+   "retirada": 0.3,
+   "defensa": 0.25,
+   "militar": 0.2,
+   "asedio": 0.7,
+   "primerAtaqueClasico": 480
+  },
+  "hostigador": {
+   "nombre": "Hostigador",
+   "desc": "Caballería que busca a tus paisanos y se retira si pierde.",
+   "economia": 0.5,
+   "primerAtaque": 75,
+   "tamMin": 3,
+   "intervalo": 40,
+   "mezcla": {
+    "enemigo": 0.1,
+    "samurai": 0.1,
+    "samurai_jinete": 0.8
+   },
+   "objetivo": "aldeanos",
+   "retirada": 0.5,
+   "defensa": 0.1,
+   "militar": 0.7,
+   "asedio": 0.3,
+   "primerAtaqueClasico": 240
+  },
+  "tortuga": {
+   "nombre": "Tortuga",
+   "desc": "Defiende mucho su castillo; cuando sale, va por tus edificios.",
+   "economia": 0.7,
+   "primerAtaque": 240,
+   "tamMin": 10,
+   "intervalo": 150,
+   "mezcla": {
+    "enemigo": 0.25,
+    "samurai": 0.4,
+    "arquero": 0.35
+   },
+   "objetivo": "edificios",
+   "retirada": 0.2,
+   "defensa": 0.5,
+   "militar": 0.4,
+   "asedio": 0.5,
+   "primerAtaqueClasico": 600
+  }
+ },
+ "_militar": "0 a 1: cuánto prefiere investigar la rama militar (1) sobre la tecnológica (0)"
+}

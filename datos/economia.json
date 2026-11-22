@@ -1,0 +1,291 @@
+{
+ "_info": "Costos, tiempos, obras, mejoras de cosecha y ritmos de recolección.",
+ "costos": {
+  "aldeano": {
+   "comida": 50
+  },
+  "lancero": {
+   "comida": 40,
+   "madera": 25
+  },
+  "boleador": {
+   "comida": 45,
+   "madera": 30
+  },
+  "jinete": {
+   "comida": 60,
+   "oro": 40
+  },
+  "aldeano_jp": {
+   "comida": 50
+  },
+  "enemigo": {
+   "comida": 40,
+   "madera": 25
+  },
+  "arquero": {
+   "comida": 35,
+   "madera": 45
+  },
+  "samurai": {
+   "comida": 60,
+   "oro": 35
+  },
+  "samurai_jinete": {
+   "comida": 70,
+   "oro": 55
+  },
+  "ariete": {
+   "madera": 160,
+   "oro": 60
+  },
+  "catapulta": {
+   "madera": 200,
+   "oro": 120
+  },
+  "torre_asedio": {
+   "madera": 260,
+   "oro": 60
+  }
+ },
+ "tiempoEntrenar": {
+  "aldeano": 4,
+  "lancero": 5,
+  "boleador": 5,
+  "jinete": 7,
+  "aldeano_jp": 4,
+  "enemigo": 5,
+  "arquero": 6,
+  "samurai": 6,
+  "samurai_jinete": 8,
+  "ariete": 14,
+  "catapulta": 18,
+  "torre_asedio": 20
+ },
+ "obras": {
+  "casa": {
+   "costo": {
+    "madera": 30
+   },
+   "t": 15
+  },
+  "casa_jp": {
+   "costo": {
+    "madera": 30
+   },
+   "t": 15
+  },
+  "comandancia": {
+   "costo": {
+    "madera": 150
+   },
+   "t": 30
+  },
+  "cuartel_jp": {
+   "costo": {
+    "madera": 150
+   },
+   "t": 30
+  },
+  "caballeriza": {
+   "costo": {
+    "madera": 150,
+    "oro": 25
+   },
+   "t": 30
+  },
+  "establo_jp": {
+   "costo": {
+    "madera": 150,
+    "oro": 25
+   },
+   "t": 30
+  },
+  "torre": {
+   "costo": {
+    "madera": 50,
+    "piedra": 100
+   },
+   "t": 35
+  },
+  "torre_jp": {
+   "costo": {
+    "madera": 50,
+    "piedra": 100
+   },
+   "t": 35
+  },
+  "granja": {
+   "costo": {
+    "madera": 60
+   },
+   "t": 12
+  },
+  "granja_jp": {
+   "costo": {
+    "madera": 60
+   },
+   "t": 12
+  },
+  "molino": {
+   "costo": {
+    "madera": 100
+   },
+   "t": 25
+  },
+  "kura": {
+   "costo": {
+    "madera": 100
+   },
+   "t": 25
+  },
+  "academia": {
+   "costo": {
+    "madera": 175
+   },
+   "t": 35
+  },
+  "heigakusho": {
+   "costo": {
+    "madera": 175
+   },
+   "t": 35
+  },
+  "taller": {
+   "costo": {
+    "madera": 150
+   },
+   "t": 30
+  },
+  "gakumonjo": {
+   "costo": {
+    "madera": 150
+   },
+   "t": 30
+  },
+  "empalizada": {
+   "costo": {
+    "madera": 8
+   },
+   "t": 5
+  },
+  "muralla": {
+   "costo": {
+    "piedra": 16
+   },
+   "t": 12
+  },
+  "muralla_jp": {
+   "costo": {
+    "piedra": 14,
+    "madera": 2
+   },
+   "t": 11
+  },
+  "taller_asedio": {
+   "costo": {
+    "madera": 200,
+    "piedra": 50
+   },
+   "t": 40
+  },
+  "taller_asedio_jp": {
+   "costo": {
+    "madera": 200,
+    "piedra": 50
+   },
+   "t": 40
+  },
+  "aserradero": {
+   "costo": {
+    "madera": 100
+   },
+   "t": 25
+  },
+  "aserradero_jp": {
+   "costo": {
+    "madera": 100
+   },
+   "t": 25
+  },
+  "socavon": {
+   "costo": {
+    "madera": 120
+   },
+   "t": 30
+  }
+ },
+ "mejoras": {
+  "campoComida": 600,
+  "campoRitmo": 0.8,
+  "campoCosto": {
+   "madera": 60
+  },
+  "campoCupo": 3,
+  "campoSiembra": 4
+ },
+ "ritmo": {
+  "madera": 1.6,
+  "oro": 1.2,
+  "piedra": 1.2,
+  "comida": 1.8
+ },
+ "cargaMax": 10,
+ "poblacionTope": 60,
+ "maquina": {
+  "costos": {
+   "aldeano": {
+    "comida": 50
+   },
+   "enemigo": {
+    "comida": 40,
+    "madera": 25
+   },
+   "arquero": {
+    "comida": 35,
+    "madera": 45
+   },
+   "lancero": {
+    "comida": 40,
+    "madera": 25
+   },
+   "boleador": {
+    "comida": 45,
+    "madera": 30
+   },
+   "jinete": {
+    "comida": 60,
+    "oro": 40
+   },
+   "samurai": {
+    "comida": 60,
+    "oro": 35
+   },
+   "samurai_jinete": {
+    "comida": 70,
+    "oro": 55
+   },
+   "ariete": {
+    "madera": 160,
+    "oro": 60
+   },
+   "catapulta": {
+    "madera": 200,
+    "oro": 120
+   }
+  },
+  "tiempos": {
+   "aldeano": 4,
+   "enemigo": 5,
+   "arquero": 6,
+   "samurai": 6,
+   "samurai_jinete": 8,
+   "lancero": 5,
+   "boleador": 5,
+   "jinete": 7,
+   "ariete": 14,
+   "catapulta": 18
+  },
+  "rindeAldeano": 0.6
+ }
+}

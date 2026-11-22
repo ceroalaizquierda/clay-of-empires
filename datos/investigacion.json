@@ -1,0 +1,1077 @@
+{
+ "_info": "Edades, desbloqueos y árbol de investigación en dos ramas (militar y tecnología). Cada investigación tiene efectos que modifican valores del jugador (ver 'claves' abajo). Las que comparten 'doctrina' son excluyentes: elegir una cierra las otras para esa partida.",
+ "_claves": {
+  "dano.<clase>": "suma al daño (clases: infanteria, tiradores, caballeria)",
+  "armadura.<clase>": "suma armadura: resta al daño recibido (mínimo 1 de daño)",
+  "vida.<clase>": "multiplica la vida",
+  "vel.<clase>": "multiplica la velocidad (también 'aldeanos')",
+  "alcance.<clase>": "suma metros de alcance (también 'torres')",
+  "vision": "suma metros al rango en que las tropas detectan enemigos",
+  "espias": "1 = te avisa cuando un rival sale a atacar (si no, solo cuando ya está cerca)",
+  "carga": "suma a lo que carga un aldeano",
+  "ritmo.<recurso>": "multiplica la recolección (madera, oro, piedra, comida)",
+  "campoComida / campoRitmo / campoCosto / campoSiembra": "modifican las MEJORAS de la cosecha (suma / multiplica / multiplica / multiplica)",
+  "obraTiempo": "multiplica el tiempo de construcción",
+  "vidaEdificios": "multiplica la vida de los edificios nuevos",
+  "poblacion": "suma al tope de población",
+  "entrenarTiempo": "multiplica el tiempo de entrenamiento",
+  "costoEdificios": "multiplica el costo de los edificios",
+  "dano.asedio / vida.asedio": "como las otras clases, para las máquinas de asedio",
+  "fuego.<clase>": "1 = los golpes de esa clase a edificios y máquinas los prenden fuego",
+  "fuegoRecibido": "multiplica cuánto se queman tus edificios",
+  "moral": "suma a la moral máxima de tus tropas (combate.json → moral)",
+  "costo.<tipo>": "multiplica el costo de esa tropa",
+  "vida.<tipo>": "multiplica la vida de esa tropa (además de la de su clase)",
+  "enredo": "multiplica cuánto dura el enredo de las boleadoras",
+  "yari": "suma al daño de la infantería sin picas contra el que ya está trabado con picas propias (0,3 = +30%)",
+  "rama tradicion": "investigaciones propias de una cultura ('cultura'): se hacen en la base principal",
+  "resiembraAuto": "1 = los campos agotados se resiembran solos pagando su costo (se apaga desde el depósito de comida)",
+  "dano.<tipo> / armadura.<tipo> / alcance.<tipo>": "suman solo para esa tropa (ej. dano.lancero)",
+  "vel.<tipo>": "multiplica la velocidad de esa tropa",
+  "rama tropa": "mejora de una tropa puntual ('tropa'): se investiga en el edificio que la entrena y no cuenta para las edades"
+ },
+ "edades": [
+  {
+   "n": 1,
+   "nombre": {
+    "plas": "Fundación",
+    "jp": "Fortín"
+   }
+  },
+  {
+   "n": 2,
+   "nombre": {
+    "plas": "Colonial",
+    "jp": "Yagura"
+   },
+   "investigaciones": 3,
+   "costo": {
+    "comida": 300,
+    "oro": 100
+   },
+   "t": 40
+  },
+  {
+   "n": 3,
+   "nombre": {
+    "plas": "Independencia",
+    "jp": "Castillo"
+   },
+   "investigaciones": 7,
+   "costo": {
+    "comida": 500,
+    "oro": 300
+   },
+   "t": 60
+  }
+ ],
+ "spriteBase": {
+  "centro": [
+   "cabildo_e1",
+   "cabildo_e2",
+   "cabildo"
+  ],
+  "castillo": [
+   "castillo_e1",
+   "castillo_e2",
+   "castillo"
+  ]
+ },
+ "desbloqueo": {
+  "boleador": 2,
+  "arquero": 2,
+  "samurai": 2,
+  "jinete": 2,
+  "samurai_jinete": 2,
+  "caballeriza": 2,
+  "establo_jp": 2,
+  "torre": 2,
+  "torre_jp": 2,
+  "taller_asedio": 2,
+  "taller_asedio_jp": 2,
+  "ariete": 2,
+  "torre_asedio": 2,
+  "catapulta": 3
+ },
+ "edificios": {
+  "militar": {
+   "plas": "academia",
+   "jp": "heigakusho"
+  },
+  "tecnologia": {
+   "plas": "taller",
+   "jp": "gakumonjo"
+  }
+ },
+ "investigaciones": [
+  {
+   "id": "filo1",
+   "rama": "militar",
+   "grupo": "Armas",
+   "nombre": "Filo I",
+   "desc": "+2 de daño a la infantería",
+   "edad": 1,
+   "costo": {
+    "comida": 80,
+    "oro": 40
+   },
+   "t": 25,
+   "efectos": {
+    "dano.infanteria": 2
+   }
+  },
+  {
+   "id": "filo2",
+   "rama": "militar",
+   "grupo": "Armas",
+   "nombre": "Filo II",
+   "desc": "+2 más de daño a la infantería",
+   "edad": 2,
+   "requiere": [
+    "filo1"
+   ],
+   "costo": {
+    "comida": 150,
+    "oro": 100
+   },
+   "t": 35,
+   "efectos": {
+    "dano.infanteria": 2
+   }
+  },
+  {
+   "id": "puntas1",
+   "rama": "militar",
+   "grupo": "Armas",
+   "nombre": "Puntas I",
+   "desc": "+1 de daño y +1 m de alcance a los tiradores",
+   "edad": 2,
+   "costo": {
+    "comida": 100,
+    "oro": 80
+   },
+   "t": 30,
+   "efectos": {
+    "dano.tiradores": 1,
+    "alcance.tiradores": 1
+   }
+  },
+  {
+   "id": "puntas2",
+   "rama": "militar",
+   "grupo": "Armas",
+   "nombre": "Puntas II",
+   "desc": "+1 más de daño a los tiradores",
+   "edad": 3,
+   "requiere": [
+    "puntas1"
+   ],
+   "costo": {
+    "comida": 200,
+    "oro": 150
+   },
+   "t": 40,
+   "efectos": {
+    "dano.tiradores": 1
+   }
+  },
+  {
+   "id": "carga",
+   "rama": "militar",
+   "grupo": "Armas",
+   "nombre": "Carga a fondo",
+   "desc": "+2 de daño a la caballería",
+   "edad": 2,
+   "costo": {
+    "comida": 120,
+    "oro": 100
+   },
+   "t": 30,
+   "efectos": {
+    "dano.caballeria": 2
+   }
+  },
+  {
+   "id": "cuero",
+   "rama": "militar",
+   "grupo": "Armaduras",
+   "nombre": "Cuero endurecido",
+   "desc": "+1 de armadura a infantería y tiradores",
+   "edad": 1,
+   "costo": {
+    "comida": 100,
+    "madera": 40
+   },
+   "t": 25,
+   "efectos": {
+    "armadura.infanteria": 1,
+    "armadura.tiradores": 1
+   }
+  },
+  {
+   "id": "cota",
+   "rama": "militar",
+   "grupo": "Armaduras",
+   "nombre": "Cota",
+   "desc": "+1 de armadura a infantería y caballería",
+   "edad": 2,
+   "requiere": [
+    "cuero"
+   ],
+   "costo": {
+    "comida": 150,
+    "oro": 120
+   },
+   "t": 35,
+   "efectos": {
+    "armadura.infanteria": 1,
+    "armadura.caballeria": 1
+   }
+  },
+  {
+   "id": "placas",
+   "rama": "militar",
+   "grupo": "Armaduras",
+   "nombre": "Placas",
+   "desc": "+1 de armadura a todas las tropas",
+   "edad": 3,
+   "requiere": [
+    "cota"
+   ],
+   "costo": {
+    "comida": 250,
+    "oro": 200
+   },
+   "t": 45,
+   "efectos": {
+    "armadura.infanteria": 1,
+    "armadura.tiradores": 1,
+    "armadura.caballeria": 1
+   }
+  },
+  {
+   "id": "marcha",
+   "rama": "militar",
+   "grupo": "Movilidad",
+   "nombre": "Marcha forzada",
+   "desc": "+10% de velocidad a infantería y tiradores",
+   "edad": 1,
+   "costo": {
+    "comida": 120
+   },
+   "t": 25,
+   "efectos": {
+    "vel.infanteria": 1.1,
+    "vel.tiradores": 1.1
+   }
+  },
+  {
+   "id": "herraduras",
+   "rama": "militar",
+   "grupo": "Movilidad",
+   "nombre": "Herraduras",
+   "desc": "+10% de velocidad a la caballería",
+   "edad": 2,
+   "costo": {
+    "comida": 120,
+    "oro": 60
+   },
+   "t": 30,
+   "efectos": {
+    "vel.caballeria": 1.1
+   }
+  },
+  {
+   "id": "exploradores",
+   "rama": "militar",
+   "grupo": "Inteligencia",
+   "nombre": "Exploradores",
+   "desc": "tus tropas detectan enemigos 3 m más lejos",
+   "edad": 1,
+   "costo": {
+    "comida": 60,
+    "oro": 30
+   },
+   "t": 20,
+   "efectos": {
+    "vision": 3
+   }
+  },
+  {
+   "id": "vigias",
+   "rama": "militar",
+   "grupo": "Inteligencia",
+   "nombre": "Vigías",
+   "desc": "+2 m de alcance a las torres",
+   "edad": 2,
+   "costo": {
+    "madera": 100,
+    "oro": 50
+   },
+   "t": 30,
+   "efectos": {
+    "alcance.torres": 2
+   }
+  },
+  {
+   "id": "espias",
+   "rama": "militar",
+   "grupo": "Inteligencia",
+   "nombre": "Espías",
+   "desc": "te avisan cuando un rival sale a atacar",
+   "edad": 2,
+   "costo": {
+    "comida": 100,
+    "oro": 100
+   },
+   "t": 30,
+   "efectos": {
+    "espias": 1
+   }
+  },
+  {
+   "id": "disciplina",
+   "rama": "militar",
+   "grupo": "Tácticas",
+   "nombre": "Disciplina",
+   "desc": "+15% de vida a la infantería",
+   "edad": 2,
+   "costo": {
+    "comida": 150,
+    "oro": 80
+   },
+   "t": 35,
+   "efectos": {
+    "vida.infanteria": 1.15
+   }
+  },
+  {
+   "id": "cab_ligera",
+   "rama": "militar",
+   "grupo": "Doctrina",
+   "doctrina": "caballeria",
+   "nombre": "Caballería ligera",
+   "desc": "+20% de velocidad y +1 de daño a la caballería",
+   "edad": 2,
+   "costo": {
+    "comida": 150,
+    "oro": 120
+   },
+   "t": 35,
+   "efectos": {
+    "vel.caballeria": 1.2,
+    "dano.caballeria": 1
+   }
+  },
+  {
+   "id": "cab_pesada",
+   "rama": "militar",
+   "grupo": "Doctrina",
+   "doctrina": "caballeria",
+   "nombre": "Caballería pesada",
+   "desc": "+30% de vida y +1 de armadura a la caballería",
+   "edad": 2,
+   "costo": {
+    "comida": 150,
+    "oro": 120
+   },
+   "t": 35,
+   "efectos": {
+    "vida.caballeria": 1.3,
+    "armadura.caballeria": 1
+   }
+  },
+  {
+   "id": "guerrillas",
+   "rama": "militar",
+   "grupo": "Doctrina",
+   "doctrina": "guerra",
+   "nombre": "Guerrillas",
+   "desc": "tiradores +1 m de alcance y +15% de velocidad; infantería +10% de velocidad",
+   "edad": 3,
+   "costo": {
+    "comida": 250,
+    "oro": 200
+   },
+   "t": 45,
+   "efectos": {
+    "alcance.tiradores": 1,
+    "vel.tiradores": 1.15,
+    "vel.infanteria": 1.1
+   }
+  },
+  {
+   "id": "linea",
+   "rama": "militar",
+   "grupo": "Doctrina",
+   "doctrina": "guerra",
+   "nombre": "Línea de batalla",
+   "desc": "infantería +2 de armadura y +10% de vida",
+   "edad": 3,
+   "costo": {
+    "comida": 250,
+    "oro": 200
+   },
+   "t": 45,
+   "efectos": {
+    "armadura.infanteria": 2,
+    "vida.infanteria": 1.1
+   }
+  },
+  {
+   "id": "cultivar1",
+   "rama": "tecnologia",
+   "grupo": "Agricultura",
+   "nombre": "Cultivar I",
+   "desc": "cada campo da 100 de comida más · los campos agotados se resiembran solos (pagando la madera; se puede apagar desde el molino)",
+   "edad": 1,
+   "costo": {
+    "comida": 60,
+    "madera": 60
+   },
+   "t": 20,
+   "efectos": {
+    "campoComida": 100,
+    "resiembraAuto": 1
+   }
+  },
+  {
+   "id": "cultivar2",
+   "rama": "tecnologia",
+   "grupo": "Agricultura",
+   "nombre": "Cultivar II",
+   "desc": "+20% de cosecha en los campos",
+   "edad": 2,
+   "requiere": [
+    "cultivar1"
+   ],
+   "costo": {
+    "comida": 120,
+    "madera": 120
+   },
+   "t": 30,
+   "efectos": {
+    "campoRitmo": 1.2
+   }
+  },
+  {
+   "id": "cultivar3",
+   "rama": "tecnologia",
+   "grupo": "Agricultura",
+   "nombre": "Cultivar III",
+   "desc": "+100 de comida por campo y +15% de cosecha",
+   "edad": 3,
+   "requiere": [
+    "cultivar2"
+   ],
+   "costo": {
+    "comida": 250,
+    "madera": 200
+   },
+   "t": 40,
+   "efectos": {
+    "campoComida": 100,
+    "campoRitmo": 1.15
+   }
+  },
+  {
+   "id": "carretilla",
+   "rama": "tecnologia",
+   "grupo": "Herramientas",
+   "nombre": "Carretilla",
+   "desc": "los aldeanos cargan 4 más y caminan +10%",
+   "edad": 1,
+   "costo": {
+    "comida": 100,
+    "madera": 50
+   },
+   "t": 25,
+   "efectos": {
+    "carga": 4,
+    "vel.aldeanos": 1.1
+   }
+  },
+  {
+   "id": "hacha",
+   "rama": "tecnologia",
+   "grupo": "Herramientas",
+   "nombre": "Hacha de hierro",
+   "desc": "+25% al talar",
+   "edad": 1,
+   "costo": {
+    "comida": 80,
+    "madera": 40
+   },
+   "t": 20,
+   "efectos": {
+    "ritmo.madera": 1.25
+   }
+  },
+  {
+   "id": "pico",
+   "rama": "tecnologia",
+   "grupo": "Herramientas",
+   "nombre": "Pico de hierro",
+   "desc": "+25% al picar oro y piedra",
+   "edad": 2,
+   "costo": {
+    "comida": 100,
+    "madera": 80
+   },
+   "t": 30,
+   "efectos": {
+    "ritmo.oro": 1.25,
+    "ritmo.piedra": 1.25
+   }
+  },
+  {
+   "id": "albanileria",
+   "rama": "tecnologia",
+   "grupo": "Construcción",
+   "nombre": "Albañilería",
+   "desc": "obras 25% más rápidas y edificios con +20% de vida",
+   "edad": 2,
+   "costo": {
+    "madera": 150,
+    "piedra": 50
+   },
+   "t": 35,
+   "efectos": {
+    "obraTiempo": 0.75,
+    "vidaEdificios": 1.2
+   }
+  },
+  {
+   "id": "empalizadas",
+   "rama": "tecnologia",
+   "grupo": "Construcción",
+   "nombre": "Empalizada",
+   "desc": "permite construir empalizadas",
+   "edad": 1,
+   "costo": {
+    "madera": 80
+   },
+   "t": 20,
+   "efectos": {},
+   "desbloquea": "empalizada"
+  },
+  {
+   "id": "canteria",
+   "rama": "tecnologia",
+   "grupo": "Construcción",
+   "nombre": "Cantería",
+   "desc": "permite construir murallas de piedra",
+   "edad": 3,
+   "requiere": [
+    "albanileria"
+   ],
+   "costo": {
+    "madera": 150,
+    "piedra": 150
+   },
+   "t": 40,
+   "efectos": {},
+   "desbloquea": "muralla"
+  },
+  {
+   "id": "intendencia",
+   "rama": "tecnologia",
+   "grupo": "Organización",
+   "nombre": "Intendencia",
+   "desc": "+15 al tope de población",
+   "edad": 2,
+   "costo": {
+    "comida": 150,
+    "oro": 50
+   },
+   "t": 30,
+   "efectos": {
+    "poblacion": 15
+   }
+  },
+  {
+   "id": "instruccion",
+   "rama": "tecnologia",
+   "grupo": "Organización",
+   "nombre": "Instrucción",
+   "desc": "entrenamiento 20% más rápido",
+   "edad": 2,
+   "costo": {
+    "comida": 120,
+    "oro": 80
+   },
+   "t": 30,
+   "efectos": {
+    "entrenarTiempo": 0.8
+   }
+  },
+  {
+   "id": "intensivo",
+   "rama": "tecnologia",
+   "grupo": "Doctrina",
+   "doctrina": "campo",
+   "nombre": "Cultivo intensivo",
+   "desc": "+150 de comida por campo",
+   "edad": 2,
+   "costo": {
+    "comida": 120,
+    "madera": 150
+   },
+   "t": 30,
+   "efectos": {
+    "campoComida": 150
+   }
+  },
+  {
+   "id": "rotacion",
+   "rama": "tecnologia",
+   "grupo": "Doctrina",
+   "doctrina": "campo",
+   "nombre": "Rotación de cultivos",
+   "desc": "resembrar cuesta la mitad y se siembra al instante",
+   "edad": 2,
+   "costo": {
+    "comida": 120,
+    "madera": 150
+   },
+   "t": 30,
+   "efectos": {
+    "campoCosto": 0.5,
+    "campoSiembra": 0.05
+   }
+  },
+  {
+   "id": "gremios",
+   "rama": "tecnologia",
+   "grupo": "Doctrina",
+   "doctrina": "ciudad",
+   "nombre": "Gremios",
+   "desc": "edificios 20% más baratos",
+   "edad": 3,
+   "costo": {
+    "comida": 200,
+    "oro": 200
+   },
+   "t": 40,
+   "efectos": {
+    "costoEdificios": 0.8
+   }
+  },
+  {
+   "id": "leva",
+   "rama": "tecnologia",
+   "grupo": "Doctrina",
+   "doctrina": "ciudad",
+   "nombre": "Leva",
+   "desc": "entrenamiento 30% más rápido y +10 de población",
+   "edad": 3,
+   "costo": {
+    "comida": 200,
+    "oro": 200
+   },
+   "t": 40,
+   "efectos": {
+    "entrenarTiempo": 0.7,
+    "poblacion": 10
+   }
+  },
+  {
+   "id": "incendiarios",
+   "rama": "militar",
+   "grupo": "Asedio",
+   "nombre": "Proyectiles incendiarios",
+   "desc": "flechas y boleadoras encendidas: prenden fuego a edificios y máquinas",
+   "edad": 2,
+   "costo": {
+    "madera": 120,
+    "oro": 80
+   },
+   "t": 35,
+   "efectos": {
+    "fuego.tiradores": 1
+   }
+  },
+  {
+   "id": "antorchas",
+   "rama": "militar",
+   "grupo": "Asedio",
+   "nombre": "Antorchas",
+   "desc": "la infantería prende fuego a lo que ataca",
+   "edad": 2,
+   "costo": {
+    "comida": 80,
+    "madera": 80
+   },
+   "t": 30,
+   "efectos": {
+    "fuego.infanteria": 1
+   }
+  },
+  {
+   "id": "asedio_reforzado",
+   "rama": "militar",
+   "grupo": "Asedio",
+   "nombre": "Asedio reforzado",
+   "desc": "máquinas de asedio con herrajes: +15 de daño y +20% de vida",
+   "edad": 3,
+   "costo": {
+    "madera": 200,
+    "oro": 150
+   },
+   "t": 45,
+   "efectos": {
+    "dano.asedio": 15,
+    "vida.asedio": 1.2
+   }
+  },
+  {
+   "id": "cortafuegos",
+   "rama": "tecnologia",
+   "grupo": "Construcción",
+   "nombre": "Cortafuegos",
+   "desc": "baldes, arena y techos mojados: tus edificios se queman la mitad",
+   "edad": 2,
+   "costo": {
+    "madera": 100,
+    "piedra": 60
+   },
+   "t": 30,
+   "efectos": {
+    "fuegoRecibido": 0.5
+   }
+  },
+  {
+   "id": "tacuara",
+   "rama": "tradicion",
+   "cultura": "plas",
+   "grupo": "Tradición",
+   "nombre": "Tacuara",
+   "desc": "lanza criolla de caña: el gaucho lancero cuesta 20% menos pero tiene 10% menos de vida",
+   "edad": 1,
+   "costo": {
+    "comida": 60,
+    "madera": 40
+   },
+   "t": 25,
+   "efectos": {
+    "costo.lancero": 0.8,
+    "vida.lancero": 0.9
+   }
+  },
+  {
+   "id": "tres_marias",
+   "rama": "tradicion",
+   "cultura": "plas",
+   "grupo": "Tradición",
+   "nombre": "Tres Marías",
+   "desc": "boleadoras de tres piedras: el enredo dura 60% más",
+   "edad": 2,
+   "costo": {
+    "comida": 100,
+    "oro": 80
+   },
+   "t": 35,
+   "efectos": {
+    "enredo": 1.6
+   }
+  },
+  {
+   "id": "revoque",
+   "rama": "tradicion",
+   "cultura": "jp",
+   "grupo": "Tradición",
+   "nombre": "Revoque de barro",
+   "desc": "paredes revocadas: tus edificios se queman 40% menos",
+   "edad": 1,
+   "costo": {
+    "madera": 60,
+    "piedra": 40
+   },
+   "t": 25,
+   "efectos": {
+    "fuegoRecibido": 0.6
+   }
+  },
+  {
+   "id": "muro_yari",
+   "rama": "tradicion",
+   "cultura": "jp",
+   "grupo": "Tradición",
+   "nombre": "Muro de yari",
+   "desc": "los samuráis pegan 30% más al enemigo que ya está trabado con tus ashigaru",
+   "edad": 2,
+   "costo": {
+    "comida": 100,
+    "oro": 80
+   },
+   "t": 35,
+   "efectos": {
+    "yari": 0.3
+   }
+  },
+  {
+   "id": "lanza_hierro",
+   "rama": "tropa",
+   "cultura": "plas",
+   "tropa": "lancero",
+   "grupo": "Tropa",
+   "nombre": "Lanza de hierro",
+   "desc": "gaucho lancero: +2 de daño",
+   "edad": 1,
+   "costo": {
+    "comida": 60,
+    "madera": 40
+   },
+   "t": 20,
+   "efectos": {
+    "dano.lancero": 2
+   }
+  },
+  {
+   "id": "poncho_cuero",
+   "rama": "tropa",
+   "cultura": "plas",
+   "tropa": "lancero",
+   "grupo": "Tropa",
+   "nombre": "Poncho de cuero",
+   "desc": "gaucho lancero: +1 de armadura",
+   "edad": 2,
+   "costo": {
+    "comida": 80,
+    "oro": 40
+   },
+   "t": 25,
+   "efectos": {
+    "armadura.lancero": 1
+   }
+  },
+  {
+   "id": "bolas_trenzadas",
+   "rama": "tropa",
+   "cultura": "plas",
+   "tropa": "boleador",
+   "grupo": "Tropa",
+   "nombre": "Boleadoras trenzadas",
+   "desc": "boleador: +2 m de alcance",
+   "edad": 2,
+   "costo": {
+    "comida": 70,
+    "madera": 60
+   },
+   "t": 25,
+   "efectos": {
+    "alcance.boleador": 2
+   }
+  },
+  {
+   "id": "brazo_boleador",
+   "rama": "tropa",
+   "cultura": "plas",
+   "tropa": "boleador",
+   "grupo": "Tropa",
+   "nombre": "Brazo de boleador",
+   "desc": "boleador: +1 de daño",
+   "edad": 2,
+   "costo": {
+    "comida": 80,
+    "oro": 40
+   },
+   "t": 25,
+   "efectos": {
+    "dano.boleador": 1
+   }
+  },
+  {
+   "id": "sable_corvo",
+   "rama": "tropa",
+   "cultura": "plas",
+   "tropa": "jinete",
+   "grupo": "Tropa",
+   "nombre": "Sable corvo",
+   "desc": "granadero: +2 de daño",
+   "edad": 2,
+   "costo": {
+    "comida": 80,
+    "oro": 60
+   },
+   "t": 25,
+   "efectos": {
+    "dano.jinete": 2
+   }
+  },
+  {
+   "id": "caballo_criollo",
+   "rama": "tropa",
+   "cultura": "plas",
+   "tropa": "jinete",
+   "grupo": "Tropa",
+   "nombre": "Caballo criollo",
+   "desc": "granadero: 10% más rápido",
+   "edad": 2,
+   "costo": {
+    "comida": 100,
+    "oro": 40
+   },
+   "t": 25,
+   "efectos": {
+    "vel.jinete": 1.1
+   }
+  },
+  {
+   "id": "yari_largo",
+   "rama": "tropa",
+   "cultura": "jp",
+   "tropa": "enemigo",
+   "grupo": "Tropa",
+   "nombre": "Yari largo",
+   "desc": "ashigaru: +1 de daño y +0,5 m de alcance",
+   "edad": 1,
+   "costo": {
+    "comida": 60,
+    "madera": 40
+   },
+   "t": 20,
+   "efectos": {
+    "dano.enemigo": 1,
+    "alcance.enemigo": 0.5
+   }
+  },
+  {
+   "id": "jingasa",
+   "rama": "tropa",
+   "cultura": "jp",
+   "tropa": "enemigo",
+   "grupo": "Tropa",
+   "nombre": "Jingasa",
+   "desc": "ashigaru: +1 de armadura (casco de hierro)",
+   "edad": 2,
+   "costo": {
+    "comida": 80,
+    "oro": 40
+   },
+   "t": 25,
+   "efectos": {
+    "armadura.enemigo": 1
+   }
+  },
+  {
+   "id": "yumi_laminado",
+   "rama": "tropa",
+   "cultura": "jp",
+   "tropa": "arquero",
+   "grupo": "Tropa",
+   "nombre": "Yumi laminado",
+   "desc": "arquero: +2 m de alcance",
+   "edad": 2,
+   "costo": {
+    "comida": 70,
+    "madera": 60
+   },
+   "t": 25,
+   "efectos": {
+    "alcance.arquero": 2
+   }
+  },
+  {
+   "id": "puntas_hierro",
+   "rama": "tropa",
+   "cultura": "jp",
+   "tropa": "arquero",
+   "grupo": "Tropa",
+   "nombre": "Puntas de hierro",
+   "desc": "arquero: +1 de daño",
+   "edad": 2,
+   "costo": {
+    "comida": 80,
+    "oro": 40
+   },
+   "t": 25,
+   "efectos": {
+    "dano.arquero": 1
+   }
+  },
+  {
+   "id": "katana_templada",
+   "rama": "tropa",
+   "cultura": "jp",
+   "tropa": "samurai",
+   "grupo": "Tropa",
+   "nombre": "Katana templada",
+   "desc": "samurái: +2 de daño",
+   "edad": 2,
+   "costo": {
+    "comida": 90,
+    "oro": 60
+   },
+   "t": 25,
+   "efectos": {
+    "dano.samurai": 2
+   }
+  },
+  {
+   "id": "o_yoroi",
+   "rama": "tropa",
+   "cultura": "jp",
+   "tropa": "samurai",
+   "grupo": "Tropa",
+   "nombre": "Ō-yoroi",
+   "desc": "samurái: 15% más de vida (armadura de láminas)",
+   "edad": 3,
+   "costo": {
+    "comida": 120,
+    "oro": 80
+   },
+   "t": 30,
+   "efectos": {
+    "vida.samurai": 1.15
+   }
+  },
+  {
+   "id": "placas_jinete",
+   "rama": "tropa",
+   "cultura": "jp",
+   "tropa": "samurai_jinete",
+   "grupo": "Tropa",
+   "nombre": "Armadura de placas",
+   "desc": "jinete samurái: +1 de armadura",
+   "edad": 2,
+   "costo": {
+    "comida": 90,
+    "oro": 60
+   },
+   "t": 25,
+   "efectos": {
+    "armadura.samurai_jinete": 1
+   }
+  },
+  {
+   "id": "caballo_guerra",
+   "rama": "tropa",
+   "cultura": "jp",
+   "tropa": "samurai_jinete",
+   "grupo": "Tropa",
+   "nombre": "Caballo de guerra",
+   "desc": "jinete samurái: 10% más rápido",
+   "edad": 2,
+   "costo": {
+    "comida": 100,
+    "oro": 40
+   },
+   "t": 25,
+   "efectos": {
+    "vel.samurai_jinete": 1.1
+   }
+  }
+ ],
+ "tradicionesFuturas": {
+  "_info": "pensadas para cuando existan los sistemas que necesitan (edad III, una a elegir por cultura)",
+  "plas": [
+   "Milicia gaucha: los paisanos pelean un rato en defensa",
+   "Montonera: emboscada desde el monte (necesita terreno)"
+  ],
+  "jp": [
+   "Asedio por hambre: cercar corta la producción (necesita cercos)",
+   "Shinobi: explorador que revela y sabotea (necesita niebla de guerra)"
+  ]
+ }
+}

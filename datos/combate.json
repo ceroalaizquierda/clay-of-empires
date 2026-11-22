@@ -1,0 +1,254 @@
+{
+ "_info": "Tipos de daño contra materiales y fuego. multiplicador[ataque][material] = parte del daño que entra (0 = no le hace nada).",
+ "_materiales": "tropa, maquina, madera, piedra, muro_madera, muro_piedra (en cada tipo: 'material'; si no tiene, tropa o madera). 'arde' (0–1+) = cuánto se quema; si falta, sale del material.",
+ "multiplicador": {
+  "cuerpo": {
+   "tropa": 1,
+   "maquina": 0.5,
+   "madera": 0.15,
+   "piedra": 0.05,
+   "muro_madera": 0.2,
+   "muro_piedra": 0.04
+  },
+  "flecha": {
+   "tropa": 1,
+   "maquina": 0.2,
+   "madera": 0.06,
+   "piedra": 0.02,
+   "muro_madera": 0.03,
+   "muro_piedra": 0.01
+  },
+  "boleadora": {
+   "tropa": 1,
+   "maquina": 0.2,
+   "madera": 0.05,
+   "piedra": 0.02,
+   "muro_madera": 0.03,
+   "muro_piedra": 0.01
+  },
+  "choque": {
+   "tropa": 0,
+   "maquina": 0.5,
+   "madera": 1,
+   "piedra": 1.2,
+   "muro_madera": 1.5,
+   "muro_piedra": 1.5
+  },
+  "piedra": {
+   "tropa": 0.7,
+   "maquina": 1,
+   "madera": 1,
+   "piedra": 1,
+   "muro_madera": 1.2,
+   "muro_piedra": 1.2
+  },
+  "nada": {
+   "tropa": 0,
+   "maquina": 0,
+   "madera": 0,
+   "piedra": 0,
+   "muro_madera": 0,
+   "muro_piedra": 0
+  }
+ },
+ "fuego": {
+  "_info": "cada golpe suma porGolpe a las llamas (hasta llamasMax) y renueva 'dura' segundos; quema dps × llamas × arde por segundo",
+  "porGolpe": 0.25,
+  "llamasMax": 4,
+  "dura": 12,
+  "dps": 3
+ },
+ "flanco": {
+  "_info": "multiplicador del daño a una tropa según de qué lado le pegan (respecto de hacia dónde mira)",
+  "frente": 1,
+  "costado": 1.25,
+  "espalda": 1.5
+ },
+ "carga": {
+  "_info": "caballería que recorre 'distancia' metros sin frenar: su primer golpe llega al contacto y multiplica 'mult'; contra picas plantadas de frente pega a la mitad y recibe 'rebote'",
+  "distancia": 6,
+  "mult": 2.2,
+  "rebote": 30
+ },
+ "plantado": {
+  "_info": "infantería con picas clavada: daño cuerpo a cuerpo que recibe de frente (costado y espalda, normales), daño extra contra caballería; no se mueve, no persigue y no pega para atrás",
+  "frente": 0.6,
+  "vsCaballeria": 2,
+  "alcance": 1
+ },
+ "moral": {
+  "_info": "moral por grupo de las tropas militares (no las máquinas de asedio). Solo cuentan las tropas en conflicto: las que pegaron o recibieron un golpe en los últimos 'conflicto' s. Cada medio segundo se suma el peso de cada bando (costo de la tropa × parte de la vida que le queda) en celdas de 'celda' m, y cada tropa en conflicto compara su bando contra el enemigo a 'radio' m: con proporción 'quiebre' o menos (0.2 = superados 5 a 1) la moral va a 0 y huye; parejos o mejor, llena; en el medio, proporcional. Baja hacia ese valor 'baja' por segundo. Golpes de costado o espalda restan 'costado'/'espalda' una vez, y la carga de caballería 'carga'. Fuera de la pelea, si no le pegan por 'retraso' s se recupera 'recupera' por segundo (× cercaBase a menos de radioBase m de su base). En 0 huye a su base: los primeros 'arranque' s a velArranque × su velocidad y después a velHuida ×, sin pelear ni obedecer; se reagrupa al llegar a 'reagrupa' × su máximo. grupo (v55): ninguna tropa huye sola; las tropas en conflicto en celdas pegadas forman un grupo y huye entero cuando el promedio de su moral llega a huyeGrupo × máximo. miedo: los grupos propios cercanos con moral baja y las tropas propias huyendo aceleran la caída (× 1 + miedo, hasta max), según su peso respecto del grupo × k y cada vez menos hasta 'radio' m; además el punto de quiebre sube × (1 + miedo × miedo.quiebre): con miedo 0,5 se quiebran superados 3,3 a 1 en vez de 5 a 1; en el aura de un general, la mitad ('max', o 'moral' de la ficha, + la clave de investigación 'moral')",
+  "max": 100,
+  "radio": 30,
+  "celda": 6,
+  "conflicto": 3,
+  "quiebre": 0.2,
+  "baja": 40,
+  "costado": 4,
+  "espalda": 10,
+  "carga": 10,
+  "retraso": 3,
+  "recupera": 5,
+  "cercaBase": 2,
+  "radioBase": 16,
+  "reagrupa": 0.5,
+  "velHuida": 1.15,
+  "arranque": 3,
+  "grupo": true,
+    "huyeGrupo": 0.05,
+    "miedo": { "radio": 40, "k": 0.5, "max": 0.5, "quiebre": 1 },
+    "velArranque": 1.4
+ },
+ "embestida": {
+  "_info": "v61: un solo choque para toda formación (cuña y columna). empuje = suma de peso × vel × carrera (metros corridos / carreraPlena, hasta 1) de los formados a radioGrupo m del que toca primero; la columna solo choca si venía corriendo al menos minCarrera m. Cada enemigo del frente (triángulo en la cuña, el ancho de la columna, hasta 'largo' m) resta peso × absorbe × (1 + apoyo × compañeros pegados detrás, hasta 2) × lado (frente, costado, espalda). Si venía marchando hacia el bloque, cierre = 1 + cierre × su velocidad / la del bloque: el golpe es más fuerte y se gasta antes. Empuje que le llega ≥ lo que resta × muerte: muere y vuela 'vuela' m; si no, pierde vida (dano × fracción), sale despedido hasta 'empujon' m, queda caído 'caido' s y pierde 'moral'. El tercio de adelante del bloque pierde retroceso × lo que frenó (hasta retrocesoMax de su vida). Susto: 'moral' × (miembros / 3, entre 1 y 3) × (empuje / empujeSusto, hasta 1) a radioMoral m; los que quedan por debajo de desbande × su máximo huyen, hasta desbandeMax de los enemigos a radioDesbande m. Las picas plantadas de frente frenan el bloque. pesos por clase y pesosTipo por tropa.",
+  "pesos": { "caballeria": 6, "infanteria": 1.5, "aldeanos": 1, "tiradores": 1 },
+  "pesosTipo": { "samurai": 2.2, "samurai_jinete": 7, "tadakatsu": 2.5, "guemes": 2 },
+  "radioGrupo": 15,
+  "carreraPlena": 12,
+  "minCarrera": 5,
+  "absorbe": 15,
+  "apoyo": 0.5,
+  "lado": { "frente": 1, "costado": 0.6, "espalda": 0.4 },
+  "cierre": 1,
+  "muerte": 2,
+  "largo": 20,
+  "dano": 0.8,
+  "vuela": 8,
+  "empujon": 1.6,
+  "caido": 1.2,
+  "moral": 15,
+  "radioMoral": 4,
+  "empujeSusto": 250,
+  "desbande": 0.6,
+  "desbandeMax": 0.25,
+  "radioDesbande": 10,
+  "retroceso": 0.25,
+  "retrocesoMax": 0.35,
+  "pasaColumna": 1
+ },
+ "estrategias": {
+  "_info": "estrategias del libro 'El arte de la guerra' (docs/diseno/libro_arte_de_la_guerra.md). Hoy solo se prenden en el modo creativo, por equipo. cuna: la caballería que carga con al menos minGrupo jinetes propios a radioGrupo m atraviesa la fila: sigue 'pasa' m más allá del golpeado durante hasta 'dura' s sin chocar con enemigos, y baja 'moral' a los enemigos a radioMoral m del golpeado. Contra: de costado recibe × costado y contra picas plantadas el rebote es × rebote. punta: la infantería con al menos minColumna infantes propios a 'radio' m está en columna: mientras pelea cuerpo a cuerpo avanza 'avance' m/s y, al chocar con enemigos, los empuja (ellos se corren × empuje, ella × propio) y no pierde moral. Desde v59, avance y empuje en 0: empujar alejaba al enemigo y la columna dejaba de pegar (150 gauchos contra 100 samuráis: 476 golpes con empuje, 780 sin). Desde v58: más de 2×tam infantes forman varias columnas de 'tam', una al lado de la otra, cada una contra su pedazo de la línea; si atrás del enemigo hay otra fila, la columna lo corre de costado (le baja 'brecha' de moral) y abre brecha; la columna metida en la línea enemiga (con 2 o más enemigos detrás) les baja 'partido' de moral cada medio segundo a los enemigos a 3 m. Contra: de costado recibe × costado, y si la columna se corta en plena pelea pierde 'corte' de moral",
+  "_formacion": "con la estrategia prendida, al recibir una orden (o con ¡Pelear! en el modo creativo, por tanda colocada) la caballería forma una cuña (triángulo de filas cada vez más anchas, separadas espAtras y espLado) y la infantería una columna de 'ancho' tropas separadas 'esp'. El que encabeza va a velLider × su velocidad; los demás alcanzan su lugar a 'alcanza' ×. Hace falta minGrupo+1 jinetes o minColumna+1 infantes para formar. La cuña solo vale si el jinete venía formado; la columna, solo para quienes la formaron",
+  "velLider": 0.85,
+  "alcanza": 1.15,
+  "cuna": {
+   "espAtras": 1.3,
+   "espLado": 1.4,
+   "minGrupo": 3,
+   "radioGrupo": 4,
+   "pasa": 5,
+   "dura": 1.6,
+   "moral": 12,
+   "radioMoral": 4,
+   "costado": 1.3,
+   "rebote": 1.5
+  },
+  "punta": {
+   "ancho": 3,
+   "esp": 0.9,
+   "minColumna": 5,
+   "radio": 3,
+   "avance": 0,
+   "empuje": 0,
+   "propio": 0.2,
+   "costado": 1.3,
+   "corte": 20,
+  "tam": 15,
+  "brecha": 4,
+  "partido": 12
+  },
+  "falange": {
+   "_info": "v63, muro de picas: la infantería de picas (y la estrategia prendida) forma un bloque de 'filas' de fondo (al menos anchoMin de ancho), separadas 'esp' m, que marcha a vel × velLider. Cuando un enemigo llega a 'planta' m por delante del que encabeza o le pegan a alguno, se clava entero mirando al frente: vale todo lo de plantado (combate.json → plantado) y además las filas de atrás pegan con +alcance m. Los costados del muro reciben × costado. Hace falta minGrupo+1 infantes de picas",
+   "filas": 4,
+   "anchoMin": 4,
+   "esp": 1,
+   "vel": 0.8,
+   "planta": 6,
+   "alcance": 0.5,
+   "costado": 1.4,
+   "minGrupo": 5
+  },
+  "luna": {
+   "_info": "v64, media luna: la infantería (con la estrategia prendida; no la de proyectiles) forma 'filas' arcos de 'angulo' grados a cada lado, separados 'esp' m, con los cuernos adelante; el del centro marcha a vel × velLider para que los cuernos se adelanten. Cuando una tropa del centro pelea o un enemigo llega a 'cierra' m del que encabeza, los cuernos (las tropas más afuera que cuerno × el ancho) van cada una contra el enemigo a 'radio' m más corrido hacia su lado, para pegarle de costado o por la espalda. Cada medio segundo, el cuerno prefiere (+trabado) al enemigo que ya pelea con otro de los suyos, así le pega de costado o por la espalda; cambia de blanco si el suyo murió, se dio vuelta a mirarlo o pasaron 'cambia' s. Si de ese lado la línea enemiga pasa el ancho del arco + margen m, ese cuerno no envuelve y pelea de frente. Hace falta minGrupo+1 infantes",
+   "filas": 2,
+   "angulo": 30,
+   "vel": 0.9,
+   "esp": 1.1,
+   "cierra": 5,
+   "centroPelea": 0.5,
+   "alcanza": 4,
+   "cuerno": 0.35,
+   "margen": 1.5,
+   "trabado": 2,
+   "cambia": 2,
+   "radio": 14,
+   "minGrupo": 7
+  },
+  "escudos": {
+   "_info": "v65, muro de escudos: la infantería (no la de proyectiles; si el muro de picas también está prendido, la de picas va al muro de picas) forma un bloque apretado de 'filas' (al menos anchoMin de ancho) separadas 'esp' m y marcha a vel × velLider (y a vel × su velocidad mientras sigue junta); las flechas no lo desarman. Con al menos 'junto' compañeros del muro a 1,6 m: proyectiles de frente × flechas, golpes de frente × frente, y sus golpes × pega. De costado o por la espalda, nada. Hace falta minGrupo+1 infantes",
+   "filas": 3,
+   "anchoMin": 4,
+   "esp": 0.9,
+   "vel": 0.9,
+   "junto": 2,
+   "flechas": 0.3,
+   "frente": 0.75,
+   "pega": 0.9,
+   "minGrupo": 5
+  },
+  "relevos": {
+   "_info": "v66, escalón de relevos: vale para la infantería con la estrategia prendida (formada o no; con más de minGrupo en la tanda). Cada medio segundo, el que pelea con menos de 'umbral' de su vida se cambia de lugar con un compañero de la tanda que esté detrás suyo a 'radio' m, sin pelear y con más de 'fresco' de vida: el fresco toma su rival y el herido descansa 'descanso' s (no busca pelea) y recupera 'moral'. Cada tropa espera 'espera' s entre cambios. Solo en el frente de la tanda (hacia donde se la mandó): el rival tiene que estar a menos de 60° de ese frente (coseno ≥ frente). El que descansa vuelve a pelear si un enemigo se le viene encima",
+   "umbral": 0.5,
+   "fresco": 0.7,
+   "radio": 2,
+   "descanso": 4,
+   "espera": 3,
+   "moral": 10,
+   "frente": 0.5,
+   "minGrupo": 5
+  },
+  "martillo": {
+   "_info": "v68, yunque y martillo: con una orden de ataque y al menos minYunque infantes y minJinetes jinetes con la estrategia, la infantería va de frente y la caballería rodea por su lado: a 'abre' m del flanco enemigo (los enemigos a 'radio' m del objetivo) y después a 'atras' m de su espalda (llega a 'llega' m). Ahí espera a que al menos 'trabado' del yunque pelee y carga. Carga igual si la atacan, si esperó 'espera' s o si el rodeo pasó de maxRodeo s. La carga choca con el choque de embestida (con 'atras' m de carrera; de espaldas el enemigo aguanta × embestida.lado.espalda)",
+   "minJinetes": 4,
+   "minYunque": 6,
+   "radio": 16,
+   "abre": 10,
+   "atras": 16,
+   "llega": 4,
+   "trabado": 0.5,
+   "espera": 6,
+   "maxRodeo": 30
+  }
+ },
+ "libro": {
+  "_info": "v69. Libro de prueba del jugador mientras no exista la maestría (docs/diseno/libro_arte_de_la_guerra.md: hasta 3 elegidas antes de la partida). 'formas': las que se eligen por grupo con el botón «Formación»; 'pasivas': valen para todo el equipo. Hoy trae todas para poder probarlas; la máquina todavía no tiene libro",
+  "formas": ["falange", "escudos", "luna", "punta", "cuna", "martillo"],
+  "pasivas": ["relevos"]
+ },
+ "cambioFormacion": {
+  "_info": "v69, costo PROVISORIO de cambiar de formación en plena pelea (a definir): el grupo tarda 'demora' s en armarla y mientras tanto no tiene ninguna formación. Fuera de la pelea forma enseguida",
+  "demora": 2
+ },
+ "persecucion": {
+  "_info": "v67. La caballería que alcanza a uno que huye le pega × caballeria y sale a buscar a los que huyen hasta cabVe m. La infantería (y cualquiera que no sea caballería ni tirador) no elige como blanco al que huye a más de infDeja m, y si venía persiguiendo a uno que se le aleja más de infDeja m lo deja y vuelve a la pelea; también lo deja cuando ya corrió infCorre m detrás de él, y después por infPausa s no toma como blanco a nadie que huya",
+  "caballeria": 1.5,
+  "cabVe": 14,
+  "infDeja": 5,
+  "infCorre": 4,
+  "infPausa": 3
+ },
+ "generales": {
+  "_info": "Generales históricos (docs/diseno/generales.md). Por ahora solo en el modo creativo. Cada ficha (unidades_y_edificios.json, clave general) trae aptitud, aura (radio en m), peso (en la moral por grupo), baja (las tropas propias dentro del aura pierden moral a baja × la velocidad normal) recupera (la recuperan recupera × más rápido) y dano (pegan dano × más: tropas bien dirigidas); si una tropa está en el aura de dos generales, vale la mejor. Si cae, las tropas propias a caidaRadio m pierden caidaPropia de moral y las enemigas ganan caidaEnemiga.",
+  "caidaRadio": 20,
+  "caidaPropia": 40,
+  "caidaEnemiga": 20,
+  "retira": 0.4,
+  "distRetira": 10,
+  "_retira": "con menos de esta parte de su vida el general se aleja del enemigo (si hay uno a menos de distRetira m); el estratega no sale a buscar pelea con ¡Pelear!"
+ },
+ "apriete": {
+  "_info": "amontonamiento: la tropa que va a pelear y se está metiendo encima de los compañeros que tiene adelante (suma de lo que se pisan > presion m) avanza a vel × su velocidad, así espera su turno en vez de empujar y encimarse. La primera fila no frena. Medido en pruebas/amontonamiento.js (600 contra 600): encimadas del 17% al ~2%; la pelea va a unos 2/3 del ritmo, porque antes, encimadas, le pegaban más tropas de las que caben alrededor de un enemigo.",
+  "presion": 0.12,
+  "vel": 0.4
+ }
+}

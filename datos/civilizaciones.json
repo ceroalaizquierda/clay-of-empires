@@ -1,0 +1,268 @@
+{
+ "_info": "Fichas de civilización (CIVS) y equivalencias de tropas para la máquina.",
+ "civs": {
+  "plas": {
+   "nombre": "Plasgentina",
+   "principal": "centro",
+   "fabricas": [
+    "centro",
+    "comandancia"
+   ],
+   "casa": "casa",
+   "aldeano": "aldeano",
+   "entrena": [
+    "aldeano",
+    "lancero",
+    "boleador",
+    "jinete"
+   ],
+   "iniciales": [
+    [
+     "lancero",
+     6
+    ],
+    [
+     "jinete",
+     2
+    ]
+   ],
+   "entrenaEn": {
+    "centro": [
+     "aldeano"
+    ],
+    "comandancia": [
+     "lancero",
+     "boleador"
+    ],
+    "caballeriza": [
+     "jinete"
+    ],
+    "taller_asedio": [
+     "ariete",
+     "catapulta",
+     "torre_asedio"
+    ]
+   },
+   "construye": [
+    "casa",
+    "comandancia",
+    "caballeriza",
+    "torre",
+    "molino",
+    "academia",
+    "taller",
+    "taller_asedio",
+    "aserradero",
+    "socavon"
+   ],
+   "campo": "campo",
+   "base": [
+    [
+     "centro",
+     0,
+     0
+    ],
+    [
+     "casa",
+     -6,
+     6.5
+    ],
+    [
+     "casa",
+     5,
+     -8
+    ],
+    [
+     "comandancia",
+     -7,
+     -6.5
+    ]
+   ],
+   "lado": "oeste",
+   "adorno": null,
+   "arboles": [
+    "pino_1",
+    "pino_2",
+    "arbol_1",
+    "arbol_2",
+    "ombu"
+   ],
+   "sprites": [
+    "paisano",
+    "gaucho",
+    "boleador",
+    "granadero",
+    "cabildo",
+    "casa_criolla",
+    "torre_criolla",
+    "caballeriza",
+    "comandancia",
+    "granja_criolla",
+    "casa_criolla_obra",
+    "comandancia_obra",
+    "caballeriza_obra",
+    "torre_criolla_obra",
+    "granja_criolla_obra",
+    "molino_criollo",
+    "molino_criollo_obra",
+    "academia",
+    "taller",
+    "academia_obra",
+    "taller_obra",
+    "cabildo_e1",
+    "cabildo_e2",
+    "empalizada",
+    "muralla_criolla",
+    "taller_asedio",
+    "ariete",
+    "catapulta",
+    "torre_asedio",
+    "aserradero",
+    "socavon_oro",
+    "socavon_piedra"
+   ],
+   "muros": [
+    "empalizada",
+    "muralla"
+   ],
+   "asedio": "taller_asedio"
+  },
+  "jp": {
+   "nombre": "Japón",
+   "principal": "castillo",
+   "fabricas": [
+    "castillo",
+    "cuartel_jp"
+   ],
+   "casa": "casa_jp",
+   "aldeano": "aldeano_jp",
+   "entrena": [
+    "aldeano_jp",
+    "enemigo",
+    "arquero",
+    "samurai",
+    "samurai_jinete"
+   ],
+   "iniciales": [
+    [
+     "enemigo",
+     6
+    ],
+    [
+     "samurai_jinete",
+     2
+    ]
+   ],
+   "entrenaEn": {
+    "castillo": [
+     "aldeano_jp"
+    ],
+    "cuartel_jp": [
+     "enemigo",
+     "arquero",
+     "samurai"
+    ],
+    "establo_jp": [
+     "samurai_jinete"
+    ],
+    "taller_asedio_jp": [
+     "ariete",
+     "catapulta",
+     "torre_asedio"
+    ]
+   },
+   "construye": [
+    "casa_jp",
+    "cuartel_jp",
+    "establo_jp",
+    "torre_jp",
+    "kura",
+    "heigakusho",
+    "gakumonjo",
+    "taller_asedio_jp",
+    "aserradero_jp",
+    "socavon"
+   ],
+   "campo": "campo_jp",
+   "base": [
+    [
+     "castillo",
+     0,
+     0
+    ],
+    [
+     "casa_jp",
+     2,
+     -12
+    ],
+    [
+     "casa_jp",
+     -7,
+     12
+    ],
+    [
+     "cuartel_jp",
+     3,
+     12
+    ]
+   ],
+   "lado": "este",
+   "adorno": "torii",
+   "arboles": [
+    "cerezo_1",
+    "cerezo_2",
+    "bambu",
+    "cerezo_1",
+    "pino_1"
+   ],
+   "sprites": [
+    "aldeano_jp",
+    "ashigaru",
+    "arquero",
+    "samurai",
+    "samurai_jinete",
+    "castillo",
+    "casa_jp",
+    "torre_jp",
+    "cuartel_jp",
+    "establo_jp",
+    "granja_jp",
+    "casa_jp_obra",
+    "cuartel_jp_obra",
+    "establo_jp_obra",
+    "torre_jp_obra",
+    "granja_jp_obra",
+    "kura_jp",
+    "kura_jp_obra",
+    "heigakusho",
+    "gakumonjo",
+    "heigakusho_obra",
+    "gakumonjo_obra",
+    "castillo_e1",
+    "castillo_e2",
+    "empalizada",
+    "muralla_jp",
+    "taller_asedio_jp",
+    "ariete",
+    "catapulta",
+    "torre_asedio",
+    "aserradero_jp",
+    "socavon_oro",
+    "socavon_piedra"
+   ],
+   "muros": [
+    "empalizada",
+    "muralla_jp"
+   ],
+   "asedio": "taller_asedio_jp"
+  }
+ },
+ "equivalencias": {
+  "plas": {
+   "enemigo": "lancero",
+   "arquero": "boleador",
+   "samurai": "lancero",
+   "samurai_jinete": "jinete"
+  }
+ }
+}

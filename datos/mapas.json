@@ -1,0 +1,63 @@
+{
+ "_info": "Tamaños de mapa del generador.",
+ "tamanos": {
+  "chico": {
+   "nombre": "Chico",
+   "desc": "140 × 140 m. Para probar y partidas rápidas.",
+   "w": 140,
+   "h": 140,
+   "minas": 1,
+   "bosques": 12,
+   "rebaños": 1,
+   "colinas": 1
+  },
+  "normal": {
+   "nombre": "Normal",
+   "desc": "240 × 240 m. Partida completa.",
+   "w": 240,
+   "h": 240,
+   "minas": 4,
+   "bosques": 40,
+   "rebaños": 4,
+   "colinas": 3
+  },
+  "grande": {
+   "nombre": "Grande",
+   "desc": "400 × 400 m. Para batallas de cientos de tropas; partidas más largas.",
+   "w": 400,
+   "h": 400,
+   "minas": 9,
+   "bosques": 110,
+   "rebaños": 9,
+   "colinas": 6
+  }
+ },
+ "relieve": {
+  "_info": "Colinas: lomas redondas (altura 0 en el borde, 1 en la cima), de a pares espejados lejos de las bases. tamanos.*.colinas = cuántos pares. radioMin/radioMax: radio de la loma en metros; lejosBase: distancia mínima a cada base (en el mapa chico, 22).",
+  "radioMin": 9,
+  "radioMax": 16,
+  "lejosBase": 34,
+  "vision": 4,
+  "_vision": "metros de visión de más en la cima (proporcional a la altura)",
+  "alcance": 2,
+  "_alcance": "metros de alcance de más para los tiradores en la cima",
+  "dano": 0.2,
+  "_dano": "daño ×(1 + dano × diferencia de altura): desde la cima contra el llano +20%; desde el llano contra la cima −20%",
+  "subida": 0.25,
+  "_subida": "subiendo la loma se camina un 25% más lento"
+ },
+ "niebla": {
+  "_info": "Niebla de guerra del jugador (la máquina todavía ve todo). Negro: nunca visto. Gris: visto antes (se ven los edificios que había, no las tropas). Claro: lo que ven ahora tus tropas y edificios.",
+  "celda": 2,
+  "cada": 0.1,
+  "unidad": 9,
+  "aldeano": 7,
+  "edificio": 11,
+  "explorado": 0.55,
+  "_explorado": "opacidad de lo ya visto",
+  "oscuro": 1,
+  "_oscuro": "opacidad de lo nunca visto (1 = negro: no se adivina nada, ni el torii rival)",
+  "fundido": 6,
+  "_fundido": "qué tan rápido se aclara u oscurece cada parte (por segundo): evita los saltos al caminar"
+ }
+}
