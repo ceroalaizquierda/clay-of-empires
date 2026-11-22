@@ -47,16 +47,16 @@
   "_subida": "subiendo la loma se camina un 25% más lento"
  },
  "niebla": {
-  "_info": "Niebla de guerra del jugador (la máquina todavía ve todo). Negro: nunca visto. Gris: visto antes (se ven los edificios que había, no las tropas). Claro: lo que ven ahora tus tropas y edificios.",
+  "_info": "v70: más suave (más vista y lo explorado más claro). Niebla de guerra del jugador (la máquina todavía ve todo). Negro: nunca visto. Gris: visto antes (se ven los edificios que había, no las tropas). Claro: lo que ven ahora tus tropas y edificios.",
   "celda": 2,
   "cada": 0.1,
-  "unidad": 9,
-  "aldeano": 7,
-  "edificio": 11,
-  "explorado": 0.55,
+  "unidad": 12,
+  "aldeano": 10,
+  "edificio": 15,
+  "explorado": 0.35,
   "_explorado": "opacidad de lo ya visto",
-  "oscuro": 1,
-  "_oscuro": "opacidad de lo nunca visto (1 = negro: no se adivina nada, ni el torii rival)",
+  "oscuro": 0.82,
+  "_oscuro": "opacidad de lo nunca visto (1 = negro). v70: 0,82 deja adivinar el terreno; las tropas y edificios enemigos que no viste siguen sin dibujarse",
   "fundido": 6,
   "_fundido": "qué tan rápido se aclara u oscurece cada parte (por segundo): evita los saltos al caminar"
  }

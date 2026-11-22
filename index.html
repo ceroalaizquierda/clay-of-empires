@@ -1058,7 +1058,7 @@ function dibujarRangos() {
 // ------------------------------------------------------------------ métricas para reportes
 // Se juntan mientras se juega (barato: tres números por cuadro y un resumen por segundo) y se
 // envían a la base del prototipo con "Enviar reporte". Claude las lee desde su sesión.
-const VERSION_PROTO = "2026-11-22 · v69 (formación por grupo: botón «Formación» y deslizar para elegir hacia dónde mira)";
+const VERSION_PROTO = "2026-11-22 · v70 (lo que salió de jugar en el celular: punto de reunión, varios edificios a la vez, tope 100, marcha que pelea, tropas que no se traban)";
 const metr = { inicio: performance.now(), cuadros: [], segundos: [], todos: [], errores: [], trabas: [], golpesVacios: 0, caminaQuieto: 0, ultimoSeg: performance.now() };
 function medirCuadro(dtMs, simMs, dibMs) {
   metr.cuadros.push([dtMs, simMs, dibMs]);
@@ -1279,7 +1279,7 @@ function dibujarSprite(e, anim, cuadro, alfa = 1, aplastar = 1) {
   const f = d.frame, k = ppm() / SPR.ppm * (e.T.escala || 1);              // los generales se ven más grandes
   const n = a.n, c = Math.min(n - 1, Math.max(0, cuadro | 0));
   let fila = 0, espejo = false;
-  if (!d.estatico) { const dir = ((e.dir % 8) + 8) % 8; fila = dir <= 4 ? dir : 8 - dir; espejo = dir > 4; }
+  if (!d.estatico) { const dir = ((dirDibujo(e) % 8) + 8) % 8; fila = dir <= 4 ? dir : 8 - dir; espejo = dir > 4; }
   const alfaPrevio = ctx.globalAlpha;
   if (alfa !== 1) ctx.globalAlpha = alfaPrevio * alfa;
   ctx.setTransform(DPR * (espejo ? -k : k), 0, 0, DPR * k * aplastar, DPR * sx, DPR * sy);
@@ -1395,7 +1395,8 @@ function poblacion() { return poblacionDe(0); }
 // cupo de población: lo dan la base principal y las casas terminadas
 function poblacionMax(k) {
   let n = 0;
-  for (const e of ents) if (e.equipo === k && vivo(e) && e.obra == null && e.T.poblacion) n += e.T.poblacion;
+  const extra = sumaM(k, "poblacionCasa");                // v70: mejora de las casas (Intendencia)
+  for (const e of ents) if (e.equipo === k && vivo(e) && e.obra == null && e.T.poblacion) n += e.T.poblacion + (e.tipo === CASA[JUG[k].cultura] ? extra : 0);
   return Math.min(POB_TOPE + sumaM(k, "poblacion"), n);
 }
 function centroJugador() { return ents.find(e => e.tipo === PRINCIPAL[JUG[0].cultura] && e.equipo === 0 && vivo(e)); }
@@ -1409,8 +1410,10 @@ function ordenarMover(unidades, x, y) {
   const cols = Math.ceil(Math.sqrt(n * 1.6)), esp = 1.15;
   const fx = Math.cos(ang), fy = Math.sin(ang), px = -fy, py = fx;      // frente y costado
   const orden = [...unidades].sort((a, b) => (b.T.militar ? 1 : 0) - (a.T.militar ? 1 : 0));
+  const marcha = { alerta: -99 };          // v70: si a uno de la marcha le pegan, se entera todo el grupo
   orden.forEach((u, i) => {
     const c = i % cols - (cols - 1) / 2, f = Math.floor(i / cols);
+    u.marcha = marcha; u.retomar = null;
     u.tarea = "mover"; u.objetivo = null; u.carga = u.T.trabajador ? u.carga : 0; u.plantado = false;
     u.destino = { x: x + px * c * esp - fx * f * esp, y: y + py * c * esp - fy * f * esp };
     u.mirar = null;
@@ -1446,6 +1449,7 @@ function enemigoLibre(e, cerca, max, edificios = false) {
     && Math.hypot(o.x - cerca.x, o.y - cerca.y) < max, max + 12, bandoRival(e));
 }
 function ordenarAtacar(unidades, obj) {
+  for (const u of unidades) u.retomar = null;
   if (!obj.T.edificio) {                                     // ariete y torre de asedio: contra tropas no sirven
     const maq = unidades.filter(u => u.T.soloEdificios); unidades = unidades.filter(u => !u.T.soloEdificios);
     if (maq.length) ordenarMover(maq, obj.x, obj.y);
@@ -1664,6 +1668,43 @@ function proximoPasoEn(e, tx, ty) {
   e.ruta = { tx, ty, pts, i: 0 };
   return pts.length > 1 ? pts[0] : [tx, ty];
 }
+// v70: la simulación gira al instante hacia el paso que da (el costado de un golpe depende de hacia dónde mira);
+// lo que se suaviza es solo el dibujo (dirDibujo), para que el sprite no parpadee cuando las tropas se esquivan
+function girar(e, dx, dy) { e.dir = dirHacia(dx, dy); }
+function dirDibujo(e) {
+  // caminando, el dibujo mira hacia donde la tropa quiere ir (e.dirMeta), no hacia el costado del esquive; quieta o
+  // peleando, hacia donde mira de verdad. En los dos casos el cambio tiene que sostenerse un instante
+  const meta = e.anim === "caminar" && e.dirMeta != null ? e.dirMeta : e.dir;
+  if (e.dirVer == null) { e.dirVer = meta; return meta; }
+  if (meta === e.dirVer) { e.dirCand = null; return e.dirVer; }
+  const dif = Math.min((meta - e.dirVer + 8) % 8, (e.dirVer - meta + 8) % 8);
+  if (e.dirCand !== meta) { e.dirCand = meta; e.tCand = tiempo; }
+  else if (tiempo - e.tCand > (dif >= 3 ? 0.08 : 0.25)) { e.dirVer = meta; e.dirCand = null; }
+  return e.dirVer;
+}
+// v70: una tropa propia quieta que tapa el paso se corre a un costado (en vez de dejar trabado al que viene)
+function apartar(o, e, vx, vy) {
+  const lado = ((o.x - e.x) * vy - (o.y - e.y) * vx) >= 0 ? -1 : 1, px = -vy * lado, py = vx * lado;
+  o.tarea = "mover"; o.auto = true; o.objetivo = null; o.marcha = null;
+  o.destino = { x: o.x + px * 1.3 + vx * 0.3, y: o.y + py * 1.3 + vy * 0.3 }; o.tApartado = tiempo + 1.5;
+}
+// v70: el que lleva un rato trabado entre los suyos, lejos de su lugar, se cambia de lugar con el suyo de adelante
+// (quieto, o también trabado) que tenga más cerca: avanza una tropa y nunca quedan dos encimadas
+function cambiarConSuyo(e, ux, uy) {
+  let mejor = null, md = 1.3;
+  vecinos(e.x, e.y, o => {
+    if (o === e || o.muerto || !o.T.unidad || !o.T.vel || bandoDe(o) !== bandoDe(e) || o.peleando || o.plantado || o.form || o.descansa != null) return false;
+    if (o.tarea && !(o.tarea === "mover" && (o.bloq || 0) > 0.2)) return false;
+    const dx = o.x - e.x, dy = o.y - e.y, dd = Math.hypot(dx, dy);
+    if (dd < md && (dx * ux + dy * uy) / (dd || 1) > 0.5) { md = dd; mejor = o; }
+    return false;
+  });
+  if (!mejor) return false;
+  const o = mejor, ke = claveCas(e.x, e.y), ko = claveCas(o.x, o.y), ex = e.x, ey = e.y;
+  e.x = o.x; e.y = o.y; o.x = ex; o.y = ey;
+  if (ocupa.get(ke) === e) ocupa.set(ke, o); if (ocupa.get(ko) === o) ocupa.set(ko, e);
+  return true;
+}
 function mover(e, tx, ty, dt, vel) {
   const dx0 = tx - e.x, dy0 = ty - e.y, dFinal = Math.hypot(dx0, dy0);
   if (dFinal < 0.05) return true;
@@ -1678,15 +1719,22 @@ function mover(e, tx, ty, dt, vel) {
   const paso = Math.min(d, vel * velMult(e) * lento * multSubida(e, dx / d, dy / d) * (e.enredado > 0 ? 0.35 : 1) * dt);
   if (OPT.casilleros && e.T.unidad && !e.atraviesa) {                  // técnica 3: no pisar una casilla ocupada
     const q = pasoCasillero(e, dx / d, dy / d, paso);
-    if (!q) { if (e.tarea === "invadir" || e.tarea === "atacar") e.tPelea = tiempo; e.anim = "quieto"; return false; }   // espera su turno
+    if (!q) {                                                           // espera su turno
+      if (e.tarea === "invadir" || e.tarea === "atacar") e.tPelea = tiempo;
+      e.bloq = (e.bloq || 0) + dt;
+      if (e.bloq > 0.6 && e.tarea === "mover" && dFinal > 4 && cambiarConSuyo(e, dx / d, dy / d)) { e.bloq = 0; e.anim = "caminar"; return false; }
+      if (e.tarea === "mover" && e.bloq > 1.2 && dFinal < 2.5) { e.bloq = 0; return true; }   // v70: ya está casi: llegó (no se queda empujando)
+      e.anim = e.bloq < 0.3 ? "caminar" : "quieto"; return false;      // un frenazo corto no corta el paso (no parpadea)
+    }
+    e.bloq = 0;
     e.x += q[0]; e.y += q[1]; e.mx = dx / d; e.my = dy / d;
     e.corrida = e.enredado > 0 ? 0 : (e.corrida || 0) + paso;
-    e.dir = dirHacia(q[0], q[1]); e.anim = "caminar";
+    girar(e, q[0], q[1]); e.dirMeta = dirHacia(dx, dy); e.anim = "caminar";
     return wx === tx && wy === ty ? d - paso < 0.05 : false;
   }
   e.x += dx / d * paso; e.y += dy / d * paso; e.mx = dx / d; e.my = dy / d;
   e.corrida = e.enredado > 0 ? 0 : (e.corrida || 0) + paso;
-  e.dir = dirHacia(dx, dy); e.anim = "caminar";
+  girar(e, dx, dy); e.dirMeta = e.dir; e.anim = "caminar";
   return wx === tx && wy === ty ? d - paso < 0.05 : false;
 }
 // grilla espacial: el mapa en celdas de 4 m; se arma una vez por cuadro y así cada búsqueda
@@ -2085,6 +2133,9 @@ function pasoCasillero(e, ux, uy, paso) {
       const o = ocupa.get(k2);
       const propio = o && bandoDe(o) === bandoDe(e);
       const pasa = propio && (e.T.general || (OPT.pasanTiradores && e.T.proyectil));                 // el general y los tiradores pasan entre los suyos
+      if (propio && g === 0 && o !== e && !o.muerto && o.T.unidad && o.T.vel && !o.tarea && !o.peleando && !o.plantado && !o.form && o.descansa == null
+          && !creativo && !o.est && !o.enEscudos && !(tiempo < (o.tApartado || 0)) && e.tarea
+          && !(e.destino && Math.hypot(e.destino.x - o.x, e.destino.y - o.y) < 4)) apartar(o, e, vx, vy);   // al que ya llegó a su lugar no se lo corre
       if (o && o !== e && !o.muerto && !pasa && (OPT.casilleros !== 3 || propio)) {
         // la columna (punta de lanza) empuja: corre al rival de la fila un poco hacia atrás si detrás tiene lugar
         if (g === 0 && e.enColumna && !o.enColumna && bandoDe(o) !== bandoDe(e)) abrirBrecha(e, o, vx, vy, paso * COMBATE.estrategias.punta.empuje);
@@ -2126,10 +2177,14 @@ function actualizar(dt) {
     f.cola[0].t -= dt;
     if (f.cola[0].t <= 0) {
       const q = f.cola.shift();
-      // sale por el lado que mira al centro del mapa
-      const ux = -f.x, uy = -f.y, l = Math.hypot(ux, uy) || 1, sale = f.T.r + 1.2;
+      // sale por el lado que mira a su punto de reunión (v70) o, si no tiene, al centro del mapa
+      const R = f.reunion, ux = R ? R.x - f.x : -f.x, uy = R ? R.y - f.y : -f.y, l = Math.hypot(ux, uy) || 1, sale = f.T.r + 1.2;
       const u = crear(q.tipo, f.x + ux / l * sale + entre(-1, 1), f.y + uy / l * sale + entre(-1, 1), f.equipo, { dir: dirHacia(ux, uy) });
       if (f.equipo === 0) texto(u.x, u.y, TIPOS[q.tipo].nombre, "#bfe0ff");
+      if (R && l > f.T.r + 2) {
+        if (R.obj && vivo(R.obj) && u.T.trabajador) ordenarRecolectar([u], R.obj);
+        else ordenarMover([u], R.x + entre(-1.2, 1.2), R.y + entre(-1.2, 1.2));
+      }
     }
   }
   for (const e of ents) {
@@ -2150,12 +2205,13 @@ function actualizar(dt) {
     if (e.vuelveADirigir && (!e.tarea || (e.tarea === "atacar" && !vivo(e.objetivo)))) { e.tarea = "dirigir"; e.vuelveADirigir = false; }
     if (e.tarea === "dirigir" && dirigir(e, dt)) continue;                                                            // el estratega sigue a su ejército
     if (e.T.despliega) { e.estabaDesplegada = e.desplegada; e.desplegada = false; }
+    if (!e.tarea && e.retomar) { e.tarea = "mover"; e.destino = e.retomar; e.retomar = null; }   // v70: terminó la pelea (o soltó al que huye): sigue la marcha
     // auto-defensa de militares (y enemigos)
     // el que está pegándole a un edificio también se defiende si le vienen encima (revisa cada medio segundo)
     // y, cuando termina con ellos, vuelve al edificio
     const contraEdificio = e.tarea === "atacar" && vivo(e.objetivo) && e.objetivo.T.edificio;
     const toca = !OPT.repartir || !e.objetivo || !vivo(e.objetivo) || (e.id + vuelta) % OPT.repartir === 0;   // decisiones repartidas
-    if (toca && e.T.militar && !e.T.soloEdificios && e.descansa == null && !(e.martillo && e.martillo.fase !== "carga") && (!e.tarea || e.tarea === "invadir" || (e.tarea === "mover" && e.auto) || (e.tarea === "atacar" && !vivo(e.objetivo))
+    if (toca && e.T.militar && !e.T.soloEdificios && e.descansa == null && !(e.martillo && e.martillo.fase !== "carga") && (!e.tarea || e.tarea === "invadir" || (e.tarea === "mover" && (e.auto || (e.marcha && !e.noFrena && !creativo && e.equipo === 0 && tiempo - e.marcha.alerta < 2.5))) || (e.tarea === "atacar" && !vivo(e.objetivo))
         || (contraEdificio && ((e._def = (e._def || 0) - dt) <= 0)))) {
       if (contraEdificio) e._def = 0.5;
       const R = contraEdificio ? alcanceDe(e) + 4 : Math.max(e.equipo !== 0 ? 9 : 7, alcanceDe(e) + 2) + sumaM(e.equipo, "vision")
@@ -2175,9 +2231,10 @@ function actualizar(dt) {
         || (PE && aCaballo && !e.plantado ? masCercano(e, o => esRival(o) && o.huye, PE.cabVe, bandoRival(e)) : null)   // v67: la caballería sale a cazar
         || (bandoDe(e) === 0 ? masCercano(e, o => vivo(o) && o.tipo === "lobo", 6, -1) : null)
         || apoyoAlCompanero(e, esRival, dt);
-      if (rival) { if (contraEdificio) e.objetivoPrevio = e.objetivo; e.tarea = e.tarea === "invadir" ? "invadir" : "atacar"; asignar(e, rival); }
+      if (rival) { if (contraEdificio) e.objetivoPrevio = e.objetivo; if (e.tarea === "mover" && !e.auto && e.destino) e.retomar = e.destino; e.tarea = e.tarea === "invadir" ? "invadir" : "atacar"; asignar(e, rival); }
       else if (e.tarea === "atacar" && !contraEdificio) {
         if (e.objetivoPrevio && vivo(e.objetivoPrevio)) { asignar(e, e.objetivoPrevio); e.objetivoPrevio = null; }    // de vuelta al edificio
+        else if (e.retomar) { asignar(e, null); e.tarea = "mover"; e.destino = e.retomar; e.retomar = null; e.objetivoPrevio = null; }   // v70: sigue la marcha
         else { e.tarea = null; e.objetivo = null; e.objetivoPrevio = null; }
       }
     }
@@ -2500,6 +2557,15 @@ function dibujar() {
     ctx.fillStyle = "rgba(255,210,90,.35)"; ctx.strokeStyle = "#ffd25a"; ctx.lineWidth = 2.5;
     ctx.beginPath(); ctx.ellipse(x, y, r, r * 0.5, 0, 0, 7); ctx.fill(); ctx.stroke();
   }
+  for (const f of sel) if (f.reunion && f.equipo === 0 && !f.muerto) {
+    const [ax, ay] = aPantalla(f.x, f.y), [bx, by] = aPantalla(f.reunion.x, f.reunion.y);
+    ctx.strokeStyle = "rgba(255,243,196,.75)"; ctx.lineWidth = 2; ctx.setLineDash([6, 6]);
+    ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx, by); ctx.stroke(); ctx.setLineDash([]);
+    ctx.strokeStyle = "#3a2a1c"; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(bx, by - 30); ctx.stroke();
+    ctx.fillStyle = JUG[0].hex; ctx.strokeStyle = "#fbf3e2"; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(bx + 1, by - 30); ctx.lineTo(bx + 20, by - 24); ctx.lineTo(bx + 1, by - 18); ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = "rgba(0,0,0,.25)"; ctx.beginPath(); ctx.ellipse(bx, by, 7, 3.5, 0, 0, 7); ctx.fill();
+  }
   if (gesto.modo === "orientar" && orientar && gesto.o0 && gesto.o1 && Math.hypot(gesto.o1[0] - gesto.o0[0], gesto.o1[1] - gesto.o0[1]) > 1) {
     const ang = Math.atan2(gesto.o1[1] - gesto.o0[1], gesto.o1[0] - gesto.o0[0]);
     for (const q of previaFormacion(orientar.us, orientar.k, ang)) {
@@ -2740,6 +2806,7 @@ function multFlanco(a, o) {
 let pistaEdificio = -99;
 function impacto(a, o, dano, extra = 1) {
   if (a && o.T.unidad && o.T.militar && a.T && a.T.unidad && hostiles(a, o)) o.provocado = { a, t: tiempo };   // sabe quién le pegó
+  if (a && o.marcha && o.tarea === "mover" && hostiles(a, o)) o.marcha.alerta = tiempo;
   if (a && a.equipo === 0 && o.T.edificio && hostiles(a, o) && multAtaque(a, o) < 0.3 && !prende(a, o) && tiempo - pistaEdificio > 45) {
     pistaEdificio = tiempo;
     aviso(`Tus tropas casi no dañan ${materialDe(o) === "piedra" || materialDe(o) === "muro_piedra" ? "la piedra" : "los edificios"}: usá arietes, catapultas o fuego`, 4000);
@@ -3975,11 +4042,14 @@ function actualizarHud(forzar) {
   if (sel.length === 1 && uno.T.recurso) det = `${NOMBRE_REC[uno.T.recurso]}: ${Math.max(0, Math.floor(uno.cant))}`;
   if (sel.length === 1 && uno.carga > 0) det = `Lleva ${Math.floor(uno.carga)} de ${uno.cargaTipo}`;
   const civ = CIVS[JUG[0].cultura];
-  const fabrica = sel.length === 1 && uno.equipo === 0 && uno.obra == null && civ.entrenaEn[uno.tipo] ? uno : null;
+  // v70: con varios edificios iguales elegidos (doble toque) entrenan todos: cada tropa va al de cola más corta
+  const fabricas = uno.equipo === 0 && civ.entrenaEn[uno.tipo] && sel.every(f => f.tipo === uno.tipo && f.equipo === 0 && f.obra == null) ? sel : [];
+  const fabrica = fabricas.length ? uno : null;
   const nombreCorto = t => TIPOS[t].corto || TIPOS[t].nombre.split(" ")[0];
   if (sel.length === 1 && uno.obra != null) det = `En construcción: ${Math.floor(uno.obra * 100)}%`;
-  else if (fabrica) det = fabrica.cola && fabrica.cola.length ? `Entrenando: ${fabrica.cola.map(q => nombreCorto(q.tipo)).join(", ")}` : "Tocá para entrenar";
-  else if (sel.length === 1 && uno.equipo === 0 && uno.T.poblacion) det = `Da ${uno.T.poblacion} de población`;
+  else if (fabrica && fabricas.length > 1) { const n = fabricas.reduce((a, f) => a + (f.cola ? f.cola.length : 0), 0); det = `${fabricas.length} a la vez · ${n ? "entrenando " + n : "tocá para entrenar"} · tocá el suelo: punto de reunión`; }
+  else if (fabrica) det = (fabrica.cola && fabrica.cola.length ? `Entrenando: ${fabrica.cola.map(q => nombreCorto(q.tipo)).join(", ")}` : "Tocá para entrenar") + " · tocá el suelo: punto de reunión";
+  else if (sel.length === 1 && uno.equipo === 0 && uno.T.poblacion) det = `Da ${uno.T.poblacion + (uno.tipo === CASA[JUG[0].cultura] ? sumaM(0, "poblacionCasa") : 0)} de población`;
   else if (sel.length === 1 && uno.equipo === 0 && uno.T.defensa) det = "Dispara sola a los enemigos cercanos";
   else if (sel.length === 1 && uno.equipo === 0 && uno.T.muro) det = "Tus tropas lo atraviesan; las enemigas tienen que romperlo";
   else if (sel.length === 1 && uno.T.despliega) det = "Tocá un muro enemigo: se arrima y tus tropas pasan por arriba";
@@ -4010,8 +4080,8 @@ function actualizarHud(forzar) {
   const minaMia = sel.length === 1 && uno.equipo === 0 && uno.obra == null && uno.T.sobreYacimiento ? uno : null;
   if (minaMia) det = `${minerosDe(uno).length}/${uno.T.mineros} mineros · quedan ${Math.floor(uno.nodo ? Math.max(0, uno.nodo.cant) : 0)} de ${uno.nodo ? uno.nodo.tipo : ""} · elegí aldeanos y tocalo para que entren`;
   if (minaMia) document.getElementById("sel-detalle").textContent = det;
-  const sig = minaMia ? "mina:" + uno.id + ":" + minerosDe(uno).length : obraMia ? "obra:" + uno.id + ":" + Math.floor(uno.obra * 10) : investigador ? firmaInv : fabrica ? `fab:${fabrica.id}:${edadDe(0)}:${!!fabrica.avance}:${INVJ[0].hechas.size}:${panelTrad}:${!!fabrica.investigando}` : deposito ? "dep:" + !!INVJ[0].sinAutoResiembra + ":" + (sumaM(0, "resiembraAuto") > 0) : campoMio ? "campo:" + uno.id + ":" + !!uno.agotado
-    : trabajadores.length ? (panelObras ? "obras" : "trab") : (picas.length || formas.length) ? `picas:${plantados > 0}:${picas.length > 0}:${formaSel}:${formas.join()}` : "";
+  const sig = minaMia ? "mina:" + uno.id + ":" + minerosDe(uno).length : obraMia ? "obra:" + uno.id + ":" + Math.floor(uno.obra * 10) : investigador ? firmaInv : fabrica ? `fab:${fabricas.length}:${fabrica.id}:${edadDe(0)}:${!!fabrica.avance}:${INVJ[0].hechas.size}:${panelTrad}:${!!fabrica.investigando}` : deposito ? "dep:" + !!INVJ[0].sinAutoResiembra + ":" + (sumaM(0, "resiembraAuto") > 0) : campoMio ? "campo:" + uno.id + ":" + !!uno.agotado
+    : trabajadores.length ? (panelObras ? "obras" : "trab") : (picas.length || formas.length || milSel.length) ? `picas:${plantados > 0}:${picas.length > 0}:${formaSel}:${formas.join()}:${milSel.length > 0}:${milSel.every(u => u.noFrena)}` : "";
   if (sig !== hudSig || forzar) {
     hudSig = sig;
     const cont = document.getElementById("entrenar"); cont.innerHTML = "";
@@ -4056,7 +4126,7 @@ function actualizarHud(forzar) {
     else if (fabrica) {
       for (const t of civ.entrenaEn[fabrica.tipo]) {
         const ok = desbloqueado(0, t);
-        boton(`${nombreCorto(t)}<small>${ok ? precio(costoTropa(0, t)) : "edad " + "I".repeat(INV.desbloqueo[t])}</small>`, () => entrenar(t, fabrica)).disabled = !ok;
+        boton(`${nombreCorto(t)}<small>${ok ? precio(costoTropa(0, t)) : "edad " + "I".repeat(INV.desbloqueo[t])}</small>`, () => entrenar(t, fabricas)).disabled = !ok;
       }
       for (const x of mejorasDeTropa(0, fabrica)) {
         const [est, porque] = estadoInv(0, x);
@@ -4096,6 +4166,13 @@ function actualizarHud(forzar) {
         const ops = [null, ...formas], i = ops.indexOf(formaSel === "mixta" ? null : formaSel), sig2 = ops[(i + 1) % ops.length];
         boton(`Formación<small>${formaSel === "mixta" ? "mezclada" : formaSel ? NOMBRE_FORMA[formaSel] : "libre"} · tocá: ${sig2 ? NOMBRE_FORMA[sig2] : "libre"}</small>`, () => { elegirFormacion(milSel, sig2); orientar = sig2 ? { us: milSel.slice(), k: sig2 } : null; actualizarHud(true); });
       }
+      if (milSel.length) {                                               // v70: qué hacen si los atacan mientras marchan
+        const noFrenan = milSel.every(u => u.noFrena);
+        boton(`Al marchar<small>${noFrenan ? "no frenan (retirada)" : "pelean si los atacan"} · tocá: ${noFrenan ? "pelean" : "no frenan"}</small>`, () => {
+          for (const u of milSel) u.noFrena = !noFrenan;
+          aviso(noFrenan ? "Al marchar: si los atacan, pelean y después siguen" : "Al marchar: no frenan aunque los ataquen (para retirarse)", 2200); actualizarHud(true);
+        });
+      }
       if (!picas.length) {} else if (plantados) boton(`Levantarse<small>vuelven a moverse</small>`, () => { plantar(picas, false); actualizarHud(true); });
       else boton(`Plantarse<small>frenan cargas de frente</small>`, () => { plantar(picas, true); aviso("Picas plantadas: fuertes de frente, débiles de costado y espalda", 2200); actualizarHud(true); });
     } else if (sig.startsWith("obra:")) {
@@ -4115,7 +4192,10 @@ function actualizarHud(forzar) {
     }
   }
 }
-function entrenar(t, fab) {
+function entrenar(t, fabs) {
+  const vale = (Array.isArray(fabs) ? fabs : [fabs]).filter(f => f && !f.muerto && !f.avance);
+  const espera = f => (f.cola || []).reduce((a, q) => a + q.t, 0);
+  const fab = vale.sort((a, b) => espera(a) - espera(b))[0] || (Array.isArray(fabs) ? fabs[0] : fabs);
   if (!fab || fab.muerto) return;
   if (poblacion() >= poblacionMax(0)) { aviso(poblacionMax(0) >= POB_TOPE + sumaM(0, "poblacion") ? "Llegaste al límite de población" : "Falta lugar: construí más casas", 2200); return; }
   if (!desbloqueado(0, t)) { aviso(`Se desbloquea en la edad ${nombreEdad(0, INV.desbloqueo[t])}`, 2000); return; }
@@ -4164,6 +4244,9 @@ function tocar(sx, sy) {
     if (doble && e.T.unidad) {
       sel = ents.filter(o => esMio(o) && o.tipo === e.tipo && enPantalla(o));
       aviso(`${sel.length} × ${e.T.nombre}`, 1100);
+    } else if (doble && e.T.edificio && CIVS[JUG[0].cultura].entrenaEn[e.tipo]) {
+      sel = ents.filter(o => esMio(o) && vivo(o) && o.tipo === e.tipo && o.obra == null);
+      aviso(sel.length > 1 ? `${sel.length} × ${e.T.nombre}: entrenan a la vez` : e.T.nombre, 1600);
     } else sel = [e];
   } else if (misUnidades.length && e) {
     if (bandoDe(e) === 1 || e.T.salvaje) ordenarAtacar(misUnidades, e);
@@ -4172,6 +4255,11 @@ function tocar(sx, sy) {
     } else ordenarMover(misUnidades, ...aMundo(sx, sy));
   } else if (misUnidades.length) {
     ordenarMover(misUnidades, ...aMundo(sx, sy));
+  } else if (sel.length && sel.every(f => esMio(f) && f.T.edificio && CIVS[JUG[0].cultura].entrenaEn[f.tipo]) && (!e || e.T.recurso)) {
+    const [x, y] = e ? [e.x, e.y] : aMundo(sx, sy);
+    for (const f of sel) f.reunion = { x, y, obj: e || null };
+    marcas.push({ x, y, t: 0 });
+    aviso(e ? "Punto de reunión: los paisanos nuevos van a juntar ahí" : "Punto de reunión: las tropas nuevas van ahí", 1600);
   } else {
     sel = e ? [e] : [];
   }

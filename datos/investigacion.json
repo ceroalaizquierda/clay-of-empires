@@ -14,6 +14,7 @@
   "obraTiempo": "multiplica el tiempo de construcción",
   "vidaEdificios": "multiplica la vida de los edificios nuevos",
   "poblacion": "suma al tope de población",
+  "poblacionCasa": "v70: suma a lo que aloja cada casa",
   "entrenarTiempo": "multiplica el tiempo de entrenamiento",
   "costoEdificios": "multiplica el costo de los edificios",
   "dano.asedio / vida.asedio": "como las otras clases, para las máquinas de asedio",
@@ -578,7 +579,7 @@
    "rama": "tecnologia",
    "grupo": "Organización",
    "nombre": "Intendencia",
-   "desc": "+15 al tope de población",
+   "desc": "cada casa aloja 3 más (v70)",
    "edad": 2,
    "costo": {
     "comida": 150,
@@ -586,7 +587,7 @@
    },
    "t": 30,
    "efectos": {
-    "poblacion": 15
+    "poblacionCasa": 3
    }
   },
   {

@@ -231,7 +231,7 @@
   "comida": 1.8
  },
  "cargaMax": 10,
- "poblacionTope": 60,
+ "poblacionTope": 100,
  "maquina": {
   "costos": {
    "aldeano": {
