@@ -1466,6 +1466,7 @@ function ordenarAtacar(unidades, obj) {
   marcas.push({ x: obj.x, y: obj.y, t: 0, color: "#ff6a5a" });
 }
 function ordenarRecolectar(unidades, nodo) {
+  trabajoMapa = null;
   let ald = unidades.filter(u => u.T.trabajador);
   if (nodo.T.campo) {
     // hasta el cupo del campo; los que sobran van a otro campo propio con lugar, cerca
@@ -1743,7 +1744,7 @@ const CELDA = 4;
 // amontonamiento: el que va a pelear y se está metiendo encima de los suyos que tiene adelante (suma de lo que
 // se pisan > presion m) avanza a vel × su velocidad: espera su turno en vez de empujar (la primera fila no frena)
 let APRIETE = { presion: 0.12, vel: 0.4 };                                 // se pisa con combate.json → apriete al cargar
-let grilla = null, grandes = [], grillaEq = null;   // grillaEq: una grilla por bando (0, 1 y -1 = de nadie)
+let grilla = null, grandes = [], grillaEq = null, grandesZona = new Map();   // v70: grandes por zona de 16 m   // grillaEq: una grilla por bando (0, 1 y -1 = de nadie)
 const claveCelda = (ix, iy) => (ix + 500) * 1000 + (iy + 500);
 let torresDesplegadas = [];
 function armarGrilla() {
@@ -1766,6 +1767,11 @@ function armarGrilla() {
     for (const o of ents) if (!o.T.vel) {
       meterEnGrilla(grillaFija, grillaFijaEq, o);
       if (!o.T.suelo && (o.T.r || 0) > 1.5) grandes.push(o);              // edificios y minas: se revisan aparte
+    }
+    grandesZona = new Map();                                              // cada grande, en las zonas que puede tocar (su radio + 6 m)
+    for (const o of grandes) {
+      const R = (o.T.r || 0) + 6.5, i0 = Math.floor((o.x - R) / 16), i1 = Math.floor((o.x + R) / 16), j0 = Math.floor((o.y - R) / 16), j1 = Math.floor((o.y + R) / 16);
+      for (let i = i0; i <= i1; i++) for (let j = j0; j <= j1; j++) { const k = claveCelda(i, j); let l = grandesZona.get(k); if (!l) grandesZona.set(k, l = []); l.push(o); }
     }
   }
   grilla = new Map(); grillaEq = { "0": new Map(), "1": new Map(), "-1": new Map() };
@@ -2211,7 +2217,7 @@ function actualizar(dt) {
     // y, cuando termina con ellos, vuelve al edificio
     const contraEdificio = e.tarea === "atacar" && vivo(e.objetivo) && e.objetivo.T.edificio;
     const toca = !OPT.repartir || !e.objetivo || !vivo(e.objetivo) || (e.id + vuelta) % OPT.repartir === 0;   // decisiones repartidas
-    if (toca && e.T.militar && !e.T.soloEdificios && e.descansa == null && !(e.martillo && e.martillo.fase !== "carga") && (!e.tarea || e.tarea === "invadir" || (e.tarea === "mover" && (e.auto || (e.marcha && !e.noFrena && !creativo && e.equipo === 0 && tiempo - e.marcha.alerta < 2.5))) || (e.tarea === "atacar" && !vivo(e.objetivo))
+    if (toca && !(tiempo < (e.sinRival || 0)) && e.T.militar && !e.T.soloEdificios && e.descansa == null && !(e.martillo && e.martillo.fase !== "carga") && (!e.tarea || e.tarea === "invadir" || (e.tarea === "mover" && (e.auto || (e.marcha && !e.noFrena && !creativo && e.equipo === 0 && tiempo - e.marcha.alerta < 2.5))) || (e.tarea === "atacar" && !vivo(e.objetivo))
         || (contraEdificio && ((e._def = (e._def || 0) - dt) <= 0)))) {
       if (contraEdificio) e._def = 0.5;
       const R = contraEdificio ? alcanceDe(e) + 4 : Math.max(e.equipo !== 0 ? 9 : 7, alcanceDe(e) + 2) + sumaM(e.equipo, "vision")
@@ -2232,6 +2238,7 @@ function actualizar(dt) {
         || (bandoDe(e) === 0 ? masCercano(e, o => vivo(o) && o.tipo === "lobo", 6, -1) : null)
         || apoyoAlCompanero(e, esRival, dt);
       if (rival) { if (contraEdificio) e.objetivoPrevio = e.objetivo; if (e.tarea === "mover" && !e.auto && e.destino) e.retomar = e.destino; e.tarea = e.tarea === "invadir" ? "invadir" : "atacar"; asignar(e, rival); }
+      else if (!creativo && (!e.tarea || (e.tarea === "mover" && e.auto))) e.sinRival = tiempo + 0.15;   // v70: nadie cerca: vuelve a mirar en 0,15 s (en el creativo no: ahí se mide el choque al detalle)
       else if (e.tarea === "atacar" && !contraEdificio) {
         if (e.objetivoPrevio && vivo(e.objetivoPrevio)) { asignar(e, e.objetivoPrevio); e.objetivoPrevio = null; }    // de vuelta al edificio
         else if (e.retomar) { asignar(e, null); e.tarea = "mover"; e.destino = e.retomar; e.retomar = null; e.objetivoPrevio = null; }   // v70: sigue la marcha
@@ -2440,7 +2447,8 @@ function separarRapido(moviles) {
   };
   for (const e of moviles) e.presion = 0;                              // cuánto lo aprietan los suyos (para que no siga empujando)
   for (const e of moviles) {
-    for (const f of grandes) empujarFijo(e, f);
+    const gz = grandesZona.get(claveCelda(Math.floor(e.x / 16), Math.floor(e.y / 16)));
+    if (gz) for (const f of gz) empujarFijo(e, f);
     const cx = Math.floor(e.x / CELDA), cy = Math.floor(e.y / CELDA);
     for (let i = -1; i <= 1; i++) for (let j = -1; j <= 1; j++) {
       const k = claveCelda(cx + i, cy + j);
@@ -3753,8 +3761,16 @@ function dibujarFlechaAlerta() {
 // El campo va en el suelo (se camina por encima) y se trabaja ADENTRO: hasta MEJORAS.campoCupo aldeanos,
 // cada uno en su lugar. Da MEJORAS.campoComida y se agota; se resiembra pagando de nuevo.
 const LUGARES_CAMPO = [[-1.4, -1.1], [1.3, -0.2], [-0.2, 1.3], [1.2, 1.5], [-1.5, 0.6]];
+let trabajoVuelta = -1, trabajoMapa = null;                 // v70: se arma una vez por cuadro (y de nuevo al dar órdenes)
 function trabajandoEn(n, sin = null) {
-  return ents.filter(u => u !== sin && !u.muerto && u.objetivo === n && (u.tarea === "recolectar" || u.tarea === "depositar"));
+  if (trabajoVuelta !== vuelta || !trabajoMapa) {
+    trabajoVuelta = vuelta; trabajoMapa = new Map();
+    for (const u of ents) if (!u.muerto && u.objetivo && (u.tarea === "recolectar" || u.tarea === "depositar")) {
+      let l = trabajoMapa.get(u.objetivo); if (!l) trabajoMapa.set(u.objetivo, l = []); l.push(u);
+    }
+  }
+  const l = trabajoMapa.get(n) || [];
+  return l.filter(u => u !== sin && !u.muerto && u.objetivo === n && (u.tarea === "recolectar" || u.tarea === "depositar"));
 }
 function lugarEnCampo(e, n) {
   const ocupados = new Set(trabajandoEn(n, e).map(u => u.lugarCampo));
