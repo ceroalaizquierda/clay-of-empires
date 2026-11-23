@@ -1058,7 +1058,7 @@ function dibujarRangos() {
 // ------------------------------------------------------------------ métricas para reportes
 // Se juntan mientras se juega (barato: tres números por cuadro y un resumen por segundo) y se
 // envían a la base del prototipo con "Enviar reporte". Claude las lee desde su sesión.
-const VERSION_PROTO = "2026-11-22 · v70 (lo que salió de jugar en el celular: punto de reunión, varios edificios a la vez, tope 100, marcha que pelea, tropas que no se traban)";
+const VERSION_PROTO = "2026-11-23 · v71 (las formaciones miran hacia donde se desliza y sostienen su puesto)";
 const metr = { inicio: performance.now(), cuadros: [], segundos: [], todos: [], errores: [], trabas: [], golpesVacios: 0, caminaQuieto: 0, ultimoSeg: performance.now() };
 function medirCuadro(dtMs, simMs, dibMs) {
   metr.cuadros.push([dtMs, simMs, dibMs]);
@@ -1413,7 +1413,7 @@ function ordenarMover(unidades, x, y) {
   const marcha = { alerta: -99 };          // v70: si a uno de la marcha le pegan, se entera todo el grupo
   orden.forEach((u, i) => {
     const c = i % cols - (cols - 1) / 2, f = Math.floor(i / cols);
-    u.marcha = marcha; u.retomar = null;
+    u.marcha = marcha; u.retomar = null; u.puesto = null;
     u.tarea = "mover"; u.objetivo = null; u.carga = u.T.trabajador ? u.carga : 0; u.plantado = false;
     u.destino = { x: x + px * c * esp - fx * f * esp, y: y + py * c * esp - fy * f * esp };
     u.mirar = null;
@@ -1460,13 +1460,13 @@ function ordenarAtacar(unidades, obj) {
   // los cuerpo a cuerpo más cercanos van al objetivo hasta llenar su cupo; los demás, al enemigo libre más cercano
   const cuerpo = unidades.filter(u => u.T.militar && !u.T.proyectil).sort((a, b) => dist(a, obj) - dist(b, obj));
   armarGrilla(); contarAtacantes();
-  for (const u of unidades) { u.tarea = "atacar"; u.objetivo = obj; u.destino = null; u.trabado = 0; u.plantado = false; u.rumboMarcha = Math.atan2(obj.y - u.y, obj.x - u.x); }
+  for (const u of unidades) { u.tarea = "atacar"; u.objetivo = obj; u.destino = null; u.trabado = 0; u.plantado = false; u.puesto = null; u.rumboMarcha = Math.atan2(obj.y - u.y, obj.x - u.x); }
   if (obj.equipo !== -1) cuerpo.slice(cupo(obj)).forEach(u => { u.objetivo = obj; const otro = enemigoLibre(u, obj, 9, !!obj.T.edificio); if (otro) u.objetivo = otro; });
   formarEstrategia(unidades, obj.x, obj.y);
   marcas.push({ x: obj.x, y: obj.y, t: 0, color: "#ff6a5a" });
 }
 function ordenarRecolectar(unidades, nodo) {
-  trabajoMapa = null;
+  trabajoMapa = null; for (const u of unidades) u.puesto = null;
   let ald = unidades.filter(u => u.T.trabajador);
   if (nodo.T.campo) {
     // hasta el cupo del campo; los que sobran van a otro campo propio con lugar, cerca
@@ -1694,7 +1694,7 @@ function apartar(o, e, vx, vy) {
 function cambiarConSuyo(e, ux, uy) {
   let mejor = null, md = 1.3;
   vecinos(e.x, e.y, o => {
-    if (o === e || o.muerto || !o.T.unidad || !o.T.vel || bandoDe(o) !== bandoDe(e) || o.peleando || o.plantado || o.form || o.descansa != null) return false;
+    if (o === e || o.muerto || !o.T.unidad || !o.T.vel || bandoDe(o) !== bandoDe(e) || o.peleando || o.plantado || o.form || o.puesto || o.descansa != null) return false;
     if (o.tarea && !(o.tarea === "mover" && (o.bloq || 0) > 0.2)) return false;
     const dx = o.x - e.x, dy = o.y - e.y, dd = Math.hypot(dx, dy);
     if (dd < md && (dx * ux + dy * uy) / (dd || 1) > 0.5) { md = dd; mejor = o; }
@@ -2215,6 +2215,9 @@ function actualizar(dt) {
     // auto-defensa de militares (y enemigos)
     // el que está pegándole a un edificio también se defiende si le vienen encima (revisa cada medio segundo)
     // y, cuando termina con ellos, vuelve al edificio
+    // v71: la tropa formada que sostiene su puesto no sale a perseguir: si su rival se fue lejos de su lugar, lo suelta
+    if (e.puesto && e.tarea === "atacar" && e.objetivo && vivo(e.objetivo) && e.objetivo.T.unidad
+        && Math.hypot(e.objetivo.x - e.puesto.x, e.objetivo.y - e.puesto.y) > alcanceDe(e) + (e.objetivo.T.r || 0.4) + e.T.r + 2) { e.tarea = null; e.objetivo = null; e.peleando = null; }
     const contraEdificio = e.tarea === "atacar" && vivo(e.objetivo) && e.objetivo.T.edificio;
     const toca = !OPT.repartir || !e.objetivo || !vivo(e.objetivo) || (e.id + vuelta) % OPT.repartir === 0;   // decisiones repartidas
     if (toca && !(tiempo < (e.sinRival || 0)) && e.T.militar && !e.T.soloEdificios && e.descansa == null && !(e.martillo && e.martillo.fase !== "carga") && (!e.tarea || e.tarea === "invadir" || (e.tarea === "mover" && (e.auto || (e.marcha && !e.noFrena && !creativo && e.equipo === 0 && tiempo - e.marcha.alerta < 2.5))) || (e.tarea === "atacar" && !vivo(e.objetivo))
@@ -2225,7 +2228,8 @@ function actualizar(dt) {
       const PE = OPT.persecucion && COMBATE.persecucion, aCaballo = e.T.clase === "caballeria";
       const esRival = o => !!o && vivo(o) && hostiles(e, o) && o.T.unidad && (!e.T.rangoMin || dist(e, o) >= e.T.rangoMin)
         && (!PE || !o.huye || aCaballo || e.T.proyectil || (dist(e, o) <= PE.infDeja && !(tiempo < (e.noPersigue ?? -1))))   // v67: a pie no se corre al que huye
-        && (!e.plantado || (dist(e, o) - (o.T.r || 0.4) - e.T.r <= alcanceDe(e) + 0.3 && ladoDelGolpe(o, e) !== "espalda"));
+        && (!e.plantado || (dist(e, o) - (o.T.r || 0.4) - e.T.r <= alcanceDe(e) + 0.3 && ladoDelGolpe(o, e) !== "espalda"))
+        && (!e.puesto || e.T.proyectil || Math.hypot(o.x - e.puesto.x, o.y - e.puesto.y) - (o.T.r || 0.4) - e.T.r <= alcanceDe(e) + 1.2);   // v71: solo el que llega a su lugar
       const actual = e.tarea === "invadir" && esRival(e.objetivo) && dist(e, e.objetivo) < R && conLugar(e, e.objetivo) ? e.objetivo : null;   // no cambiar a cada rato
       // el que recibe un tiro de lejos va contra el que se lo tiró (si no, los tiradores le pegan sin respuesta)
       const provocador = !e.plantado && e.provocado && tiempo - e.provocado.t < 3 && vivo(e.provocado.a) && hostiles(e, e.provocado.a) && !actual
@@ -2238,6 +2242,11 @@ function actualizar(dt) {
         || (bandoDe(e) === 0 ? masCercano(e, o => vivo(o) && o.tipo === "lobo", 6, -1) : null)
         || apoyoAlCompanero(e, esRival, dt);
       if (rival) { if (contraEdificio) e.objetivoPrevio = e.objetivo; if (e.tarea === "mover" && !e.auto && e.destino) e.retomar = e.destino; e.tarea = e.tarea === "invadir" ? "invadir" : "atacar"; asignar(e, rival); }
+      else if (e.puesto && !e.tarea && !e.peleando) {                   // v71: sin rival en su lugar: vuelve a él y mira al frente
+        if (Math.hypot(e.x - e.puesto.x, e.y - e.puesto.y) > 0.5) { e.tarea = "mover"; e.auto = true; e.destino = { x: e.puesto.x, y: e.puesto.y }; e.mirar = e.puesto.dir; }
+        else e.dir = e.puesto.dir;
+        e.sinRival = tiempo + 0.15;
+      }
       else if (!creativo && (!e.tarea || (e.tarea === "mover" && e.auto))) e.sinRival = tiempo + 0.15;   // v70: nadie cerca: vuelve a mirar en 0,15 s (en el creativo no: ahí se mide el choque al detalle)
       else if (e.tarea === "atacar" && !contraEdificio) {
         if (e.objetivoPrevio && vivo(e.objetivoPrevio)) { asignar(e, e.objetivoPrevio); e.objetivoPrevio = null; }    // de vuelta al edificio
@@ -2253,7 +2262,7 @@ function actualizar(dt) {
       else { golpear(e, m, dt); if (e.anim === "quieto" && prevAnim !== "quieto") e.t = 0; continue; }
     }
     if (e.tarea === "mover" && e.destino) {
-      if (mover(e, e.destino.x, e.destino.y, dt, e.T.vel)) { e.tarea = null; e.destino = null; if (e.mirar != null) e.dir = e.mirar; }
+      if (mover(e, e.destino.x, e.destino.y, dt, e.T.vel)) { e.tarea = null; e.destino = null; if (e.mirar != null) { e.dir = e.mirar; e.mirar = null; } }
     } else if (e.tarea === "atacar" || (e.tarea === "invadir" && e.objetivo && vivo(e.objetivo))) {
       if (!e.objetivo || !vivo(e.objetivo)) { e.tarea = e.tarea === "invadir" ? "invadir" : null; e.objetivo = null; }
       else {
@@ -3098,8 +3107,15 @@ function elegirFormacion(us, k, angElegido) {
   if (enPelea) { cambiosFormacion.push({ us, t: tiempo + K.demora, tx, ty }); texto(cx, cy - 1, "cambiando formación…", "#ffe08a"); }
   else {
     ordenarMover(us, tx, ty);
-    // forma ahí mismo: el frente queda hacia donde se eligió (no sigue los pasitos del que encabeza hasta su lugar)
-    for (const u of us) if (u.form && u.form.g) u.form.g.fijo = true;
+    // forma ahí mismo: el frente queda hacia donde se eligió (no sigue los pasitos del que encabeza hasta su lugar).
+    // v71: el que encabeza se queda donde está (es la punta de la vista previa) y mira al frente; los demás van a
+    // su lugar alrededor de él. Antes caminaba hasta el centro del grupo (a veces para atrás) y todos copiaban
+    // hacia dónde miraba él al llegar
+    for (const g of new Set(us.map(u => u.form && u.form.g).filter(Boolean))) {
+      g.fijo = true; g.sostiene = true; const L = g.lider;
+      L.tarea = null; L.destino = null; L.retomar = null; L.dir = dirHacia(g.fx, g.fy); L.dirMeta = L.dir;
+      L.puesto = { x: L.x, y: L.y, dir: L.dir };                       // v71: sostiene su lugar (ver «puesto» en la auto-defensa)
+    }
   }
   aviso(k ? `${NOMBRE_FORMA[k]}: ${enPelea ? "se arma en " + K.demora + " s" : "forman ahí mismo"}; deslizá un dedo para elegir hacia dónde miran` : "Formación libre", 2200);
   return ang;
@@ -3379,9 +3395,14 @@ function seguirFormacion(e, dt) {
   }
   if (e === L) return false;                                          // el que encabeza cumple la orden (más lento, ver mover)
   const px = L.x + g.fx * e.form.a - g.fy * e.form.c, py = L.y + g.fy * e.form.a + g.fx * e.form.c, d = Math.hypot(px - e.x, py - e.y);
-  if (d > 0.12) mover(e, px, py, dt, e.T.vel * (d > 1 ? COMBATE.estrategias.alcanza : 1));
-  else if (!L.tarea) { e.form = null; e.tarea = null; e.destino = null; e.dir = L.dir; return false; }   // llegaron: quedan formados
-  else { e.dir = L.dir; if (L.anim === "caminar") e.anim = "caminar"; }
+  // v71: con el que encabeza quieto, a menos de 0,4 m ya está (antes 0,12: se quedaban empujándose entre ellas) y la
+  // que lleva 2 s trabada, o la que no llegó 4 s después de que él paró, se queda donde está (si no, caminaba para siempre)
+  const quieto = !L.tarea;
+  if (!quieto) g.quietoDesde = null; else if (g.quietoDesde == null) g.quietoDesde = tiempo;
+  const listo = quieto && g.sostiene && (d < 0.4 || (e.bloq || 0) > 2 || tiempo - g.quietoDesde > 4);
+  if (d > 0.12 && !listo) mover(e, px, py, dt, e.T.vel * (d > 1 ? COMBATE.estrategias.alcanza : 1));
+  else if (quieto) { e.form = null; e.tarea = null; e.destino = null; e.dir = e.dirMeta = dirHacia(g.fx, g.fy); if (g.sostiene) e.puesto = { x: e.x, y: e.y, dir: e.dir }; return false; }   // llegaron: quedan formados mirando al frente (v71)
+  else { e.dir = e.dirMeta = dirHacia(g.fx, g.fy); if (L.anim === "caminar") e.anim = "caminar"; }
   return true;
 }
 // devuelve true mientras el jinete atraviesa (ese cuadro no hace otra cosa)
@@ -3468,7 +3489,7 @@ function lunaTick() {
       // atacando, los cuernos cierran recién cuando el centro ya pelea (si no, llegan antes y solos); esperando, cuando el enemigo se acerca
       const pegados = centro.filter(u => u.peleando).length;
       if (g.ataca ? pegados < Math.max(1, centro.length * K.centroPelea) : !pegados && !masCercano(L, o => vivo(o) && hostiles(L, o) && o.T.unidad, K.cierra, bandoRival(L))) continue;
-      g.cerro = true; g.cx = L.x; g.cy = L.y;                           // dónde se cerró (el centro de la maniobra)
+      g.cerro = true; g.cx = L.x; g.cy = L.y; for (const u of us) u.puesto = null;   // v71: la maniobra los saca del puesto                           // dónde se cerró (el centro de la maniobra)
       const pos = u => (u.x - L.x) * g.fx + (u.y - L.y) * g.fy, cu = us.filter(u => Math.abs(u.lunaC) > g.ancho * 0.6), ce = us.filter(u => Math.abs(u.lunaC) < g.ancho * 0.2);
       g.formaAlCerrar = { cuernos: +(cu.reduce((a, u) => a + pos(u), 0) / Math.max(1, cu.length)).toFixed(1), centro: +(ce.reduce((a, u) => a + pos(u), 0) / Math.max(1, ce.length)).toFixed(1) };
       if (L.equipo === 0 || creativo) texto(L.x, L.y - 0.8, "¡envolver!", "#bfe0ff");
@@ -3604,6 +3625,7 @@ function relevosTick() {
     });
     if (!q) continue;
     const ux = u.x, uy = u.y; u.x = q.x; u.y = q.y; q.x = ux; q.y = uy;
+    const pu = u.puesto; u.puesto = q.puesto; q.puesto = pu;            // v71: cambian también de puesto
     if (OPT.casilleros && ocupa) { ocupa.set(claveCas(q.x, q.y), q); ocupa.set(claveCas(u.x, u.y), u); }
     q.tarea = "atacar"; q.destino = null; q.form = null; asignar(q, o); q.dir = dirHacia(o.x - q.x, o.y - q.y); q.tRelevo = tiempo;
     if (o.peleando === u) o.peleando = q;                                // el fresco se le planta adelante: el rival sigue con él
