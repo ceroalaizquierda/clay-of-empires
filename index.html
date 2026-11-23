@@ -1058,7 +1058,7 @@ function dibujarRangos() {
 // ------------------------------------------------------------------ métricas para reportes
 // Se juntan mientras se juega (barato: tres números por cuadro y un resumen por segundo) y se
 // envían a la base del prototipo con "Enviar reporte". Claude las lee desde su sesión.
-const VERSION_PROTO = "2026-11-23 · v71 (formaciones que miran hacia donde se desliza y sostienen su puesto; animales que se cazan; paisanos que se reparten los recursos)";
+const VERSION_PROTO = "2026-11-23 · v71 (formaciones que miran hacia donde se desliza y sostienen su puesto; animales que se cazan con arco; paisanos que se reparten los recursos)";
 const metr = { inicio: performance.now(), cuadros: [], segundos: [], todos: [], errores: [], trabas: [], golpesVacios: 0, caminaQuieto: 0, ultimoSeg: performance.now() };
 function medirCuadro(dtMs, simMs, dibMs) {
   metr.cuadros.push([dtMs, simMs, dibMs]);
@@ -1846,6 +1846,11 @@ function vecinos(x, y, f) {
   return false;
 }
 function golpear(e, obj, dt) {
+  // v71: el paisano caza con arco (datos: T.caza = rango, daño, cadencia y proyectil); contra lo demás, a mano
+  if (e.T.caza && obj.T.animal && !e.cazando) {
+    const T0 = e.T; e.T = T0._conArco || (T0._conArco = Object.assign({}, T0, T0.caza)); e.cazando = true;
+    try { return golpear(e, obj, dt); } finally { e.T = T0; e.cazando = false; }
+  }
   const d = dist(e, obj) - (obj.T.r || 0.4) - e.T.r;
   if (e.T.despliega) {
     // torre de asedio: se arrima al muro enemigo y baja el puente; mientras esté ahí, su bando pasa

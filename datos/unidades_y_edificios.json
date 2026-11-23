@@ -3,6 +3,7 @@
  "tipos": {
   "aldeano": {
    "spr": "paisano",
+   "caza": { "_info": "v71: contra animales tira con arco (sprite del gesto pendiente: hoy hace el del hacha)", "rango": 6, "dano": 4, "cad": 1.4, "proyectil": "flecha" },
    "trabajador": true,
    "vida": 40,
    "vel": 2.3,
@@ -158,6 +159,7 @@
   },
   "aldeano_jp": {
    "spr": "aldeano_jp",
+   "caza": { "_info": "v71: contra animales tira con arco (sprite del gesto pendiente: hoy hace el del hacha)", "rango": 6, "dano": 4, "cad": 1.4, "proyectil": "flecha" },
    "trabajador": true,
    "vida": 40,
    "vel": 2.3,
