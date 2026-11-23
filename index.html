@@ -1058,7 +1058,7 @@ function dibujarRangos() {
 // ------------------------------------------------------------------ métricas para reportes
 // Se juntan mientras se juega (barato: tres números por cuadro y un resumen por segundo) y se
 // envían a la base del prototipo con "Enviar reporte". Claude las lee desde su sesión.
-const VERSION_PROTO = "2026-11-23 · v71 (las formaciones miran hacia donde se desliza y sostienen su puesto)";
+const VERSION_PROTO = "2026-11-23 · v71 (formaciones que miran hacia donde se desliza y sostienen su puesto; animales: se cazan y los paisanos se defienden del lobo)";
 const metr = { inicio: performance.now(), cuadros: [], segundos: [], todos: [], errores: [], trabas: [], golpesVacios: 0, caminaQuieto: 0, ultimoSeg: performance.now() };
 function medirCuadro(dtMs, simMs, dibMs) {
   metr.cuadros.push([dtMs, simMs, dibMs]);
@@ -1921,7 +1921,7 @@ function golpear(e, obj, dt) {
         && masCercano(obj, o => o.equipo === e.equipo && o.T.picas && o.peleando === obj && vivo(o), 3, bandoDe(e))) extra *= 1 + sumaM(e.equipo, "yari");
     if (e.muerto) return false;
     impacto(e, obj, e.T.dano, extra);
-    if (obj.T.huye && vivo(obj)) { obj.asustado = 3; obj.amenaza = e; }       // solo el ciervo escapa
+    if (obj.T.huye && vivo(obj)) { obj.asustado = 0.6; obj.amenaza = e; }     // solo el ciervo escapa (v71: un arranque corto, antes 3 s)
     if (obj.vida <= 0 && !obj.muerto) matar(obj);
   }
   return true;
@@ -2264,7 +2264,11 @@ function actualizar(dt) {
     if (e.tarea === "mover" && e.destino) {
       if (mover(e, e.destino.x, e.destino.y, dt, e.T.vel)) { e.tarea = null; e.destino = null; if (e.mirar != null) { e.dir = e.mirar; e.mirar = null; } }
     } else if (e.tarea === "atacar" || (e.tarea === "invadir" && e.objetivo && vivo(e.objetivo))) {
-      if (!e.objetivo || !vivo(e.objetivo)) { e.tarea = e.tarea === "invadir" ? "invadir" : null; e.objetivo = null; }
+      if (!e.objetivo || !vivo(e.objetivo)) {
+        e.tarea = e.tarea === "invadir" ? "invadir" : null; e.objetivo = null;
+        const tp = e.trabajoPrevio; e.trabajoPrevio = null;              // v71: el paisano que se defendió del lobo vuelve a lo suyo
+        if (tp && tp.tarea && (!tp.objetivo || !agotado(tp.objetivo))) { e.tarea = tp.tarea; asignar(e, tp.objetivo); e.destino = tp.destino; }
+      }
       else {
         // el que invade y todavía no pelea revisa cada medio segundo si su objetivo ya está lleno
         if (e.tarea === "invadir" && (e._busca = (e._busca || 0) - dt) <= 0) {
@@ -2384,10 +2388,18 @@ function actualizarAnimal(e, dt) {
   e.anim = "quieto";
   if (e.T.salvaje) {
     const presa = masCercano(e, o => vivo(o) && o.T.unidad && o.equipo === 0, 7) || masCercano(e, o => vivo(o) && o.tipo === "oveja", 7);
-    if (presa) { golpear(e, presa, dt); return; }
+    if (presa) {
+      // v71: los paisanos atacados por un lobo se defienden (el atacado y los que trabajan a 5 m) y después vuelven a lo suyo
+      if (presa.T.trabajador && presa.equipo === 0 && presa.objetivo !== e && dist(e, presa) < 3) {
+        const ayudan = [presa]; vecinos(presa.x, presa.y, o => { if (ayudan.length < 6 && o !== presa && vivo(o) && o.T.trabajador && o.equipo === 0 && o.objetivo !== e && !o.huye && (o.x - presa.x) ** 2 + (o.y - presa.y) ** 2 < 25) ayudan.push(o); return false; });
+        for (const u of ayudan) { if (u.tarea !== "atacar") u.trabajoPrevio = { tarea: u.tarea, objetivo: u.objetivo, destino: u.destino }; u.tarea = "atacar"; u.destino = null; asignar(u, e); }
+      }
+      golpear(e, presa, dt); return;
+    }
   }
   if (e.T.huye) {
-    const am = masCercano(e, o => vivo(o) && o.T.unidad && o.equipo === 0, 5);
+    // v71: se deja acercar por los paisanos (si no, como corre el doble, no había cómo cazarlo); escapa de las tropas
+    const am = masCercano(e, o => vivo(o) && o.T.unidad && o.equipo === 0 && o.T.militar, 5);
     if (am) { const a = Math.atan2(e.y - am.y, e.x - am.x); mover(e, e.x + Math.cos(a) * 3, e.y + Math.sin(a) * 3, dt, e.T.vel); e.anim = "galope"; limitar(e); return; }
   }
   if (e.asustado > 0) {
@@ -2773,7 +2785,7 @@ const cargaMax = e => CARGA_MAX + sumaM(e.equipo, "carga");
 // (tropa, maquina, madera, piedra, muro_madera, muro_piedra): datos/combate.json dice cuánto del daño
 // entra. Así un lancero apenas raspa un edificio de piedra y un ariete no le hace nada a una tropa.
 const ataqueDe = e => !e ? "cuerpo" : e.T.ataque || (e.T.proyectil === "flecha" ? "flecha" : e.T.proyectil === "boleadoras" ? "boleadora" : "cuerpo");
-const materialDe = o => o.T.material || (o.T.unidad ? "tropa" : "madera");
+const materialDe = o => o.T.material || (o.T.unidad || o.T.animal ? "tropa" : "madera");   // v71: los animales son de carne (antes contaban como madera: × 0,15)
 const multAtaque = (a, o) => { const f = COMBATE && COMBATE.multiplicador[ataqueDe(a)]; return f ? (f[materialDe(o)] ?? 1) : 1; };
 function danoDe(atacante, dano, o) {
   // daño propio + mejoras, menos la armadura del blanco (al menos 1), por el multiplicador de tipo y material
