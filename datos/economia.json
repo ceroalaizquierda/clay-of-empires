@@ -232,6 +232,7 @@
  },
  "cargaMax": 10,
  "poblacionTope": 100,
+ "cupoJuntar": { "_info": "v71: cuántos paisanos trabajan a la vez un mismo árbol, arbusto o mina (cuentan los que fueron a dejar la carga y vuelven). Los que sobran van al más cercano del mismo recurso con lugar, a 15 m o menos; si no hay ninguno, esperan su turno. El campo y la granja tienen el suyo", "arbol": 3, "arbusto": 2, "oro": 6, "piedra": 6 },
  "maquina": {
   "costos": {
    "aldeano": {

@@ -379,7 +379,7 @@ let CARGA_MAX = 10;
 let OBRA = {};                 // se carga de datos/*.json (ver cargarDatos)
 // Valores de la cosecha que más adelante subirán los edificios de investigación (árbol de mejoras).
 let MEJORAS = {};                 // se carga de datos/*.json (ver cargarDatos)
-let POB_TOPE = 60;                       // población máxima por jugador, con todas las casas
+let POB_TOPE = 60, CUPO_JUNTAR = {};                       // población máxima por jugador, con todas las casas
 let RITMO = {};                 // se carga de datos/*.json (ver cargarDatos)
 
 let ents = [], sel = [], idSig = 1, previa = [];
@@ -1058,7 +1058,7 @@ function dibujarRangos() {
 // ------------------------------------------------------------------ métricas para reportes
 // Se juntan mientras se juega (barato: tres números por cuadro y un resumen por segundo) y se
 // envían a la base del prototipo con "Enviar reporte". Claude las lee desde su sesión.
-const VERSION_PROTO = "2026-11-23 · v71 (formaciones que miran hacia donde se desliza y sostienen su puesto; animales: se cazan y los paisanos se defienden del lobo)";
+const VERSION_PROTO = "2026-11-23 · v71 (formaciones que miran hacia donde se desliza y sostienen su puesto; animales que se cazan; paisanos que se reparten los recursos)";
 const metr = { inicio: performance.now(), cuadros: [], segundos: [], todos: [], errores: [], trabas: [], golpesVacios: 0, caminaQuieto: 0, ultimoSeg: performance.now() };
 function medirCuadro(dtMs, simMs, dibMs) {
   metr.cuadros.push([dtMs, simMs, dibMs]);
@@ -1465,6 +1465,14 @@ function ordenarAtacar(unidades, obj) {
   formarEstrategia(unidades, obj.x, obj.y);
   marcas.push({ x: obj.x, y: obj.y, t: 0, color: "#ff6a5a" });
 }
+// v71: cuántos paisanos trabajan a la vez un árbol, arbusto o mina (economia.json → cupoJuntar); null = sin tope
+const cupoJuntar = n => n.T.campo || n.T.granja || n.T.animal || !n.T.recurso ? null : CUPO_JUNTAR[n.tipo] ?? Math.max(2, Math.floor(2 * Math.PI * ((n.T.r || 0.5) + 0.4) / 2));
+const lugarParaJuntar = (n, e, extra = 0) => { const k = cupoJuntar(n); return k == null || trabajandoEn(n, e).length + extra < k; };
+// el más cercano del mismo recurso con lugar, a 'r' m del recurso de referencia (o de la tropa)
+function otroParaJuntar(e, n, r = 15, cuenta = null) {
+  return masCercano(e, o => o !== n && !o.muerto && o.T.recurso === n.T.recurso && !o.T.campo && !o.T.granja && o.cant > 0 && o.obra == null && !o.agotado
+    && !(o.cubierto && !o.cubierto.muerto) && Math.hypot(o.x - n.x, o.y - n.y) <= r && lugarParaJuntar(o, e, cuenta ? cuenta.get(o) || 0 : 0), r + 10);
+}
 function ordenarRecolectar(unidades, nodo) {
   trabajoMapa = null; for (const u of unidades) u.puesto = null;
   let ald = unidades.filter(u => u.T.trabajador);
@@ -1477,6 +1485,17 @@ function ordenarRecolectar(unidades, nodo) {
       if (otro) { u.tarea = "recolectar"; u.objetivo = otro; u.lugarCampo = null; }
     }
     for (const u of ald) u.lugarCampo = null;
+  }
+  if (cupoJuntar(nodo) != null) {
+    // v71: hasta el cupo de ese recurso (van los más cercanos); los que sobran, al más cercano igual con lugar
+    const cuenta = new Map(), libre = Math.max(0, cupoJuntar(nodo) - trabajandoEn(nodo).filter(u => !ald.includes(u)).length);
+    const orden = ald.slice().sort((a, b) => dist(a, nodo) - dist(b, nodo)), quedan = orden.slice(0, libre);
+    for (const u of orden.slice(libre)) {
+      const otro = otroParaJuntar(u, nodo, 15, cuenta);
+      if (otro) { cuenta.set(otro, (cuenta.get(otro) || 0) + 1); u.tarea = "recolectar"; u.objetivo = otro; u.destino = null; }
+      else quedan.push(u);                                              // no hay otro con lugar: espera su turno
+    }
+    ald = quedan;
   }
   for (const u of ald) { u.tarea = "recolectar"; u.objetivo = nodo; u.destino = null; }
   const otros = unidades.filter(u => !u.T.trabajador);
@@ -2344,7 +2363,15 @@ function recolectar(e, dt) {
     e.dir = (e.lugarCampo * 3 + 1) % 8;
   } else {
     const d = dist(e, n) - (n.T.r || 0.5) - e.T.r;
-    if (d > 0.45) { mover(e, n.x, n.y, dt, e.T.vel); if (e.carga > 0) e.anim = "cargar"; return; }
+    if (d > 0.45) {
+      // v71: el que no llega porque está lleno (o trabado) se cambia al más cercano igual con lugar
+      if (d < 4 && ((e.bloq || 0) > 1 || (d < 2.5 && !lugarParaJuntar(n, e) && !(tiempo < (e.tCambioJuntar || 0))))) {
+        e.tCambioJuntar = tiempo + 2;
+        const otro = !lugarParaJuntar(n, e) || (e.bloq || 0) > 1 ? otroParaJuntar(e, n, 15) : null;
+        if (otro) { e.objetivo = otro; e.bloq = 0; trabajoMapa = null; return; }
+      }
+      mover(e, n.x, n.y, dt, e.T.vel); if (e.carga > 0) e.anim = "cargar"; return;
+    }
     e.dir = dirHacia(n.x - e.x, n.y - e.y);
   }
   e.anim = n.T.animal ? "recolectar" : n.T.accion;
@@ -2377,8 +2404,9 @@ function agotar(n) {
 function buscarSiguiente(e) {
   // si se agotó, buscar el recurso del mismo tipo más cercano
   const tipo = e.cargaTipo;
-  const sig = masCercano(e, o => !o.muerto && o.T.recurso === tipo && o.cant > 0 && o.obra == null && !o.agotado && !(o.cubierto && !o.cubierto.muerto)
-      && (o.T.campo ? campoConLugar(o, e) : !o.T.granja || o.equipo === e.equipo), 18)
+  const sirve = o => !o.muerto && o.T.recurso === tipo && o.cant > 0 && o.obra == null && !o.agotado && !(o.cubierto && !o.cubierto.muerto)
+      && (o.T.campo ? campoConLugar(o, e) : !o.T.granja || o.equipo === e.equipo);
+  const sig = masCercano(e, o => sirve(o) && lugarParaJuntar(o, e), 18) || masCercano(e, sirve, 18)   // v71: primero uno con lugar
     || (tipo === "comida" ? masCercano(e, o => o.T.animal && o.muerto && o.comida > 0, 18) : null);
   if (sig) { e.objetivo = sig; e.tarea = e.carga > 0 ? "depositar" : "recolectar"; }
   else if (e.carga > 0) e.tarea = "depositar";
@@ -4797,7 +4825,7 @@ async function cargarDatos() {
   INV = inv; INV_POR_ID = Object.fromEntries(inv.investigaciones.map(x => [x.id, x]));
   TIPOS = u.tipos; CIVS = c.civs; EQUIV_PLAS = c.equivalencias.plas;
   COSTOS = e.costos; TIEMPO_ENTRENAR = e.tiempoEntrenar; OBRA = e.obras; MEJORAS = e.mejoras; RITMO = e.ritmo;
-  CARGA_MAX = e.cargaMax; POB_TOPE = e.poblacionTope; COSTOS_IA = e.maquina.costos; TIEMPO_IA = e.maquina.tiempos; IA_RINDE = e.maquina.rindeAldeano;
+  CARGA_MAX = e.cargaMax; POB_TOPE = e.poblacionTope; CUPO_JUNTAR = e.cupoJuntar || {}; COSTOS_IA = e.maquina.costos; TIEMPO_IA = e.maquina.tiempos; IA_RINDE = e.maquina.rindeAldeano;
   PERSONALIDADES = r.personalidades; TAM_MAPA = m.tamanos; RELIEVE = m.relieve || null; NIEBLA_D = m.niebla || null;
   PRINCIPAL = Object.fromEntries(Object.entries(CIVS).map(([k, v]) => [k, v.principal]));
   FABRICAS = Object.fromEntries(Object.entries(CIVS).map(([k, v]) => [k, Object.keys(v.entrenaEn)]));
