@@ -12,13 +12,14 @@
    "aldeano": "aldeano",
    "entrena": [
     "aldeano",
+    "facon",
     "lancero",
     "boleador",
     "jinete"
    ],
    "iniciales": [
     [
-     "lancero",
+     "facon",
      6
     ],
     [
@@ -31,6 +32,7 @@
      "aldeano"
     ],
     "comandancia": [
+     "facon",
      "lancero",
      "boleador"
     ],
@@ -138,6 +140,7 @@
    "aldeano": "aldeano_jp",
    "entrena": [
     "aldeano_jp",
+    "nobushi",
     "enemigo",
     "arquero",
     "samurai",
@@ -145,7 +148,7 @@
    ],
    "iniciales": [
     [
-     "enemigo",
+     "nobushi",
      6
     ],
     [
@@ -158,6 +161,7 @@
      "aldeano_jp"
     ],
     "cuartel_jp": [
+     "nobushi",
      "enemigo",
      "arquero",
      "samurai"
@@ -262,7 +266,8 @@
    "enemigo": "lancero",
    "arquero": "boleador",
    "samurai": "lancero",
-   "samurai_jinete": "jinete"
+   "samurai_jinete": "jinete",
+   "nobushi": "facon"
   }
  }
 }

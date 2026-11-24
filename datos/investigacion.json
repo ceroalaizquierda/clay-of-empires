@@ -811,6 +811,40 @@
    }
   },
   {
+   "id": "lanza_criolla",
+   "rama": "tropa",
+   "cultura": "plas",
+   "tropa": "facon",
+   "grupo": "Tropa",
+   "nombre": "Lanza criolla",
+   "desc": "el gaucho ata el facón a una caña: pasa a gaucho lancero (más alcance y picas contra la caballería); los que ya tenés también",
+   "edad": 1,
+   "costo": {
+    "comida": 150,
+    "madera": 100
+   },
+   "t": 40,
+   "desbloquea": "lancero",
+   "efectos": {}
+  },
+  {
+   "id": "leva_ashigaru",
+   "rama": "tropa",
+   "cultura": "jp",
+   "tropa": "nobushi",
+   "grupo": "Tropa",
+   "nombre": "Leva de ashigaru",
+   "desc": "los nobushi reciben yari y forman en filas: pasan a ashigaru (más alcance y picas contra la caballería); los que ya tenés también",
+   "edad": 1,
+   "costo": {
+    "comida": 150,
+    "madera": 100
+   },
+   "t": 40,
+   "desbloquea": "enemigo",
+   "efectos": {}
+  },
+  {
    "id": "lanza_hierro",
    "rama": "tropa",
    "cultura": "plas",
@@ -826,7 +860,10 @@
    "t": 20,
    "efectos": {
     "dano.lancero": 2
-   }
+   },
+   "requiere": [
+    "lanza_criolla"
+   ]
   },
   {
    "id": "poncho_cuero",
@@ -844,7 +881,10 @@
    "t": 25,
    "efectos": {
     "armadura.lancero": 1
-   }
+   },
+   "requiere": [
+    "lanza_criolla"
+   ]
   },
   {
    "id": "bolas_trenzadas",
@@ -935,7 +975,10 @@
    "efectos": {
     "dano.enemigo": 1,
     "alcance.enemigo": 0.5
-   }
+   },
+   "requiere": [
+    "leva_ashigaru"
+   ]
   },
   {
    "id": "jingasa",
@@ -953,7 +996,10 @@
    "t": 25,
    "efectos": {
     "armadura.enemigo": 1
-   }
+   },
+   "requiere": [
+    "leva_ashigaru"
+   ]
   },
   {
    "id": "yumi_laminado",

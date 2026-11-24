@@ -4,6 +4,10 @@
   "aldeano": {
    "comida": 50
   },
+  "facon": {
+   "comida": 35,
+   "madera": 10
+  },
   "lancero": {
    "comida": 40,
    "madera": 25
@@ -18,6 +22,10 @@
   },
   "aldeano_jp": {
    "comida": 50
+  },
+  "nobushi": {
+   "comida": 35,
+   "madera": 10
   },
   "enemigo": {
    "comida": 40,
@@ -50,10 +58,12 @@
  },
  "tiempoEntrenar": {
   "aldeano": 4,
+  "facon": 4,
   "lancero": 5,
   "boleador": 5,
   "jinete": 7,
   "aldeano_jp": 4,
+  "nobushi": 4,
   "enemigo": 5,
   "arquero": 6,
   "samurai": 6,
@@ -238,6 +248,10 @@
    "aldeano": {
     "comida": 50
    },
+   "nobushi": {
+    "comida": 35,
+    "madera": 10
+   },
    "enemigo": {
     "comida": 40,
     "madera": 25
@@ -245,6 +259,10 @@
    "arquero": {
     "comida": 35,
     "madera": 45
+   },
+   "facon": {
+    "comida": 35,
+    "madera": 10
    },
    "lancero": {
     "comida": 40,
@@ -277,10 +295,12 @@
   },
   "tiempos": {
    "aldeano": 4,
+   "nobushi": 4,
    "enemigo": 5,
    "arquero": 6,
    "samurai": 6,
    "samurai_jinete": 8,
+   "facon": 4,
    "lancero": 5,
    "boleador": 5,
    "jinete": 7,

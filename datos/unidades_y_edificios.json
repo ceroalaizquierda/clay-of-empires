@@ -17,6 +17,21 @@
    "militar": false,
    "clase": "aldeanos"
   },
+  "facon": {
+   "spr": "gaucho_facon",
+   "vida": 60,
+   "vel": 2.6,
+   "rango": 0.9,
+   "dano": 7,
+   "cad": 0.9,
+   "r": 0.38,
+   "alto": 2.6,
+   "nombre": "Gaucho",
+   "unidad": true,
+   "militar": true,
+   "clase": "infanteria",
+   "evoluciona": "lancero"
+  },
   "lancero": {
    "spr": "gaucho",
    "vida": 70,
@@ -27,6 +42,8 @@
    "r": 0.38,
    "alto": 2.6,
    "nombre": "Gaucho lancero",
+   "corto": "Lancero",
+   "permite": "lancero",
    "unidad": true,
    "militar": true,
    "clase": "infanteria",
@@ -173,6 +190,21 @@
    "militar": false,
    "clase": "aldeanos"
   },
+  "nobushi": {
+   "spr": "ashigaru",
+   "vida": 60,
+   "vel": 2.5,
+   "rango": 1.0,
+   "dano": 7,
+   "cad": 0.9,
+   "r": 0.38,
+   "alto": 2.7,
+   "nombre": "Nobushi",
+   "unidad": true,
+   "militar": true,
+   "clase": "infanteria",
+   "evoluciona": "enemigo"
+  },
   "enemigo": {
    "spr": "ashigaru",
    "vida": 70,
@@ -183,6 +215,7 @@
    "r": 0.38,
    "alto": 2.7,
    "nombre": "Ashigaru",
+   "permite": "enemigo",
    "unidad": true,
    "militar": true,
    "clase": "infanteria",

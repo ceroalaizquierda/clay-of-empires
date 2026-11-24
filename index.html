@@ -435,7 +435,8 @@ function iaPoblacion(ia) {
 function iaLimiteAldeanos(ia) { return 4 + 6 * ents.filter(e => e.equipo === ia.jug && e.tipo === CASA[ia.cultura] && vivo(e)).length; }
 function iaElegirUnidad(ia, permitidas = null) {
   // según su mezcla de tropas, entre las que puede entrenar ese edificio
-  const opciones = Object.entries(ia.mezcla).filter(([t]) => (!permitidas || permitidas.includes(t)) && desbloqueado(ia.jug, t));
+  const opciones = Object.entries(ia.mezcla).map(([t, w]) => [etapaActual(ia.jug, t), w])     // sin evolucionar, la etapa anterior
+    .filter(([t]) => (!permitidas || permitidas.includes(t)) && desbloqueado(ia.jug, t));
   const total = opciones.reduce((a, [, w]) => a + w, 0);
   if (!total) return null;
   let r = azar() * total, acum = 0;
@@ -475,8 +476,10 @@ function iaInvestigar(ia, dt) {
     if (t.length) { const x = t[Math.floor(azar() * t.length)]; if (!investigar(k, base, x, pagarIA) && !ia.quiereInv) ia.quiereInv = x.costo; }
   }
   for (const f of ents.filter(e => e.equipo === k && vivo(e) && e.obra == null && CIVS[ia.cultura].entrenaEn[e.tipo] && e.tipo !== PRINCIPAL[ia.cultura] && !e.investigando)) {
-    const m = mejorasDeTropa(k, f).filter(x => estadoInv(k, x)[0] === "lista" && (ia.mezcla[x.tropa] || 0) > 0);
-    if (m.length && azar() < 0.35) { const x = m[Math.floor(azar() * m.length)]; investigar(k, f, x, pagarIA); }
+    const m = mejorasDeTropa(k, f).filter(x => estadoInv(k, x)[0] === "lista" && (ia.mezcla[x.tropa] || ia.mezcla[TIPOS[x.tropa].evoluciona] || 0) > 0);
+    const evo = tiempo > 60 && m.find(x => x.desbloquea);               // pasar a la etapa siguiente va primero (pasado el primer minuto)
+    if (evo) { if (!investigar(k, f, evo, pagarIA) && !ia.quiereInv) ia.quiereInv = evo.costo; }
+    else if (m.length && azar() < 0.35) { const x = m[Math.floor(azar() * m.length)]; if (!x.desbloquea) investigar(k, f, x, pagarIA); }
   }
   for (const f of ents.filter(e => e.equipo === k && vivo(e) && e.obra == null && e.T.investiga && !e.investigando)) {
     const listas = INV.investigaciones.filter(x => x.rama === f.T.investiga && estadoInv(k, x)[0] === "lista");
@@ -659,7 +662,7 @@ let inicioElegido = "clasico", inicioUsado = "clasico";
 // velocidad del juego (para pruebas): la simulación corre varias veces por cuadro
 let velJuego = 1;
 const VEL_BASE = 1.8;                     // el ritmo "×1" (probado en celular: a 1 se sentía lento)
-const PALETA = ["aldeano", "lancero", "boleador", "jinete", "aldeano_jp", "enemigo", "arquero", "samurai", "samurai_jinete", "ariete", "catapulta"];
+const PALETA = ["aldeano", "facon", "lancero", "boleador", "jinete", "aldeano_jp", "nobushi", "enemigo", "arquero", "samurai", "samurai_jinete", "ariete", "catapulta"];
 const esJp = t => CIVS.jp.entrena.includes(t) || (!!TIPOS[t] && TIPOS[t].civ === "jp");
 let colocarTipo = null, colocarCant = 10;
 function generarMapa(tam, seed) {
@@ -991,7 +994,7 @@ function armarCreativo() {
   sep();
   for (const t of PALETA) {
     const eq = esJp(t) ? 1 : 0;
-    boton(TIPOS[t].nombre.replace(" a caballo", "<small>a caballo</small>").replace("Gaucho lancero", "Gaucho"), "eq" + eq,
+    boton(TIPOS[t].nombre.replace(" a caballo", "<small>a caballo</small>").replace("Gaucho lancero", "Lancero"), "eq" + eq,
       () => { colocarTipo = colocarTipo === t ? null : t; sel = []; armarCreativo(); if (colocarTipo) aviso("Tocá el suelo para colocar", 1200); }, colocarTipo === t);
   }
   sep();
@@ -1058,7 +1061,7 @@ function dibujarRangos() {
 // ------------------------------------------------------------------ métricas para reportes
 // Se juntan mientras se juega (barato: tres números por cuadro y un resumen por segundo) y se
 // envían a la base del prototipo con "Enviar reporte". Claude las lee desde su sesión.
-const VERSION_PROTO = "2026-11-23 · v71 (formaciones que miran hacia donde se desliza y sostienen su puesto; animales que se cazan con arco; paisanos que se reparten los recursos)";
+const VERSION_PROTO = "2026-11-24 · v72 (etapas de tropa: el gaucho del facón pasa a lancero y el nobushi a ashigaru; lanzas con estocada; jinetes que atacan sin mover el caballo)";
 const metr = { inicio: performance.now(), cuadros: [], segundos: [], todos: [], errores: [], trabas: [], golpesVacios: 0, caminaQuieto: 0, ultimoSeg: performance.now() };
 function medirCuadro(dtMs, simMs, dibMs) {
   metr.cuadros.push([dtMs, simMs, dibMs]);
@@ -3701,7 +3704,22 @@ function mejora(k, clave) {
   return base * multM(k, clave);
 }
 const costoEdificio = (k, tipo) => { const m = multM(k, "costoEdificios"); return Object.fromEntries(Object.entries(OBRA[tipo].costo).map(([r, v]) => [r, Math.round(v * m)])); };
-const desbloqueado = (k, tipo) => (INV.desbloqueo[tipo] || 1) <= edadDe(k) && (!TIPOS[tipo] || !TIPOS[tipo].permite || sumaM(k, "permite." + TIPOS[tipo].permite) > 0);
+const desbloqueado = (k, tipo) => (INV.desbloqueo[tipo] || 1) <= edadDe(k) && (!TIPOS[tipo] || !TIPOS[tipo].permite || sumaM(k, "permite." + TIPOS[tipo].permite) > 0)
+  && !(TIPOS[tipo] && TIPOS[tipo].evoluciona && evolucionado(k, tipo));
+// etapas de una tropa (v): el gaucho del facón pasa a gaucho lancero, el nobushi a ashigaru. La etapa vieja deja
+// de entrenarse cuando se investiga la nueva (su `permite`), y las que ya existen se convierten.
+const evolucionado = (k, tipo) => { const a = TIPOS[tipo].evoluciona; return !!a && sumaM(k, "permite." + (TIPOS[a].permite || a)) > 0; };
+const etapaPrevia = tipo => Object.keys(TIPOS).find(t => TIPOS[t].evoluciona === tipo) || null;
+// lo que un jugador entrena hoy en lugar de `tipo` (la etapa anterior, si todavía no evolucionó)
+const etapaActual = (k, tipo) => { const p = etapaPrevia(tipo); return p && !desbloqueado(k, tipo) && desbloqueado(k, p) ? p : tipo; };
+function evolucionar(k, de, a) {
+  for (const e of ents) if (e.equipo === k && e.tipo === de && !e.muerto) {
+    const parte = e.vida / vidaMax(e);
+    e.tipo = a; e.T = TIPOS[a]; e.vidaMax = vidaMaxDe(e); e.vida = parte * e.vidaMax;
+  }
+  for (const f of ents) if (f.equipo === k && f.cola) for (const q of f.cola) if (q.tipo === de) q.tipo = a;
+  for (const i of ias) if (i.jug === k) for (const q of Object.values(i.prod)) if (q && q.tipo === de) q.tipo = a;
+}
 // qué falta para poder usar un tipo: la edad o una investigación
 function faltaPara(k, tipo) {
   if ((INV.desbloqueo[tipo] || 1) > edadDe(k)) return "edad " + "I".repeat(INV.desbloqueo[tipo]);
@@ -3750,7 +3768,9 @@ function completarInvestigacion(k, x) {
   INVJ[k].hechas.add(x.id);
   aplicarEfectos(k, x.efectos || {});
   if (x.desbloquea) INVJ[k].suma["permite." + x.desbloquea] = 1;
-  if (k === 0) { aviso(`Investigación terminada: ${x.nombre}`, 2200); actualizarHud(true); }
+  const previa = x.desbloquea && TIPOS[x.desbloquea] && etapaPrevia(x.desbloquea);
+  if (previa) evolucionar(k, previa, x.desbloquea);
+  if (k === 0) { aviso(previa ? `${x.nombre} lista: el ${TIPOS[previa].nombre.toLowerCase()} ahora es ${TIPOS[x.desbloquea].nombre.toLowerCase()}` : `Investigación terminada: ${x.nombre}`, 2600); actualizarHud(true); }
 }
 function requisitoEdad(k) { return INV.edades[edadDe(k)] || null; }          // la próxima edad (o null)
 function avanzarEdad(k, f, pagarCon) {
@@ -4208,6 +4228,7 @@ function actualizarHud(forzar) {
     }
     else if (fabrica) {
       for (const t of civ.entrenaEn[fabrica.tipo]) {
+        if (etapaActual(0, t) !== t || (TIPOS[t].evoluciona && evolucionado(0, t))) continue;   // una sola etapa por tropa
         const ok = desbloqueado(0, t);
         boton(`${nombreCorto(t)}<small>${ok ? precio(costoTropa(0, t)) : "edad " + "I".repeat(INV.desbloqueo[t])}</small>`, () => entrenar(t, fabricas)).disabled = !ok;
       }
