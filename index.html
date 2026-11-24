@@ -138,6 +138,16 @@ body.colocando #seleccion, body.colocando #acciones { display: none !important; 
 .entrenar .trad { border-color: #e8c35a; }
 .entrenar .mejora { border-color: #9fd08a; }
 .entrenar .hechas { flex-basis: 100%; font-size: 11px; color: var(--texto-suave); }
+/* v74: ficha de una investigación (manteniendo apretado su botón 3 s; la barrita muestra cuánto falta) */
+.entrenar .boton[data-inv] { position: relative; overflow: hidden; }
+.entrenar .boton[data-inv]:disabled { pointer-events: none; }   /* el toque lo toma la franja: la ficha también se ve de las bloqueadas */
+.entrenar .boton[data-inv]::after { content: ""; position: absolute; left: 4px; bottom: 3px; height: 4px; border-radius: 2px;
+  width: calc((100% - 8px) * var(--mant, 0)); background: var(--acento); opacity: .9; }
+#ficha-inv { left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 30; width: min(560px, 92vw); max-height: 86vh;
+  overflow-y: auto; padding: 14px 18px; touch-action: pan-y; }
+#ficha-inv h3 { margin: 0 0 6px; font-family: var(--f-display); font-size: 20px; color: var(--acento); text-align: center; }
+#ficha-inv p { margin: 0 0 10px; white-space: pre-line; font-size: 14px; line-height: 1.35; }
+#ficha-inv .boton { width: 100%; }
 .rivales { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 6px; margin-top: 6px; }
 .tarjeta .rival { margin-top: 0; font-size: 15px; min-height: 0; padding: 7px 10px; text-align: left; }
 .tarjeta .rival small { font-size: 11px; margin-top: 2px; line-height: 1.3; }
@@ -219,6 +229,7 @@ body.colocando #seleccion, body.colocando #acciones { display: none !important; 
 <div id="minimapa" class="hud panel"><canvas id="mini" width="256" height="180" aria-label="Minimapa"></canvas></div>
 <button id="alerta" class="hud panel" hidden>¡Te atacan! <small>tocá para ir</small></button>
 <div id="aviso" class="hud panel" style="opacity:0"></div>
+<div id="ficha-inv" class="hud panel" hidden role="dialog" aria-label="Ficha de la investigación"><h3></h3><p></p><button class="boton">Cerrar</button></div>
 
 <div id="seleccion" class="hud panel" hidden>
   <div class="sel-fila">
@@ -1061,7 +1072,7 @@ function dibujarRangos() {
 // ------------------------------------------------------------------ métricas para reportes
 // Se juntan mientras se juega (barato: tres números por cuadro y un resumen por segundo) y se
 // envían a la base del prototipo con "Enviar reporte". Claude las lee desde su sesión.
-const VERSION_PROTO = "2026-11-24 · v73 (las tropas que ya están en el campo no evolucionan: solo las que salen después de la investigación; poncho de tela)";
+const VERSION_PROTO = "2026-11-24 · v74 (ficha de cada investigación manteniendo apretado su botón 3 s)";
 const metr = { inicio: performance.now(), cuadros: [], segundos: [], todos: [], errores: [], trabas: [], golpesVacios: 0, caminaQuieto: 0, ultimoSeg: performance.now() };
 function medirCuadro(dtMs, simMs, dibMs) {
   metr.cuadros.push([dtMs, simMs, dibMs]);
@@ -3741,6 +3752,100 @@ function aplicarEfectos(k, efectos) {
 const paraEdad = k => [...INVJ[k].hechas].filter(id => INV_POR_ID[id] && INV_POR_ID[id].rama !== "tropa").length;
 // mejoras de tropa: se investigan en el edificio que entrena esa tropa
 const mejorasDeTropa = (k, fab) => INV.investigaciones.filter(x => x.rama === "tropa" && x.cultura === JUG[k].cultura && (CIVS[JUG[k].cultura].entrenaEn[fab.tipo] || []).includes(x.tropa));
+// ---- v74: ficha de una investigación. Manteniendo apretado su botón FICHA_MS se abre una ficha con qué hace en
+// palabras (sin investigarla); el toque corto la investiga. Se toma en la franja (#entrenar) para que también ande en
+// las bloqueadas, y se corta si el dedo se desliza (la franja se desplaza de costado).
+const FICHA_MS = 3000;
+const QUIENES_INV = { infanteria: "Infantería", tiradores: "Tiradores", caballeria: "Caballería", aldeanos: "Aldeanos", torres: "Torres", asedio: "Máquinas de asedio" };
+const RAMAS_INV = { militar: "Militar", tecnologia: "Tecnología", tradicion: "Tradición de la cultura", tropa: "Mejora de tropa" };
+const quienInv = k => QUIENES_INV[k] || (TIPOS[k] ? TIPOS[k].nombre : k);
+const porcInv = m => { const p = Math.round((m - 1) * 100); return (p > 0 ? "+" : "−") + Math.abs(p) + " %"; };
+const numInv = v => Number.isInteger(v) ? String(v) : String(Math.round(v * 10) / 10).replace(".", ",");
+function textoEfecto(clave, v) {
+  const [pre, de] = clave.split(".");
+  switch (pre) {
+    case "dano": return `${quienInv(de)}: +${numInv(v)} de daño por golpe`;
+    case "armadura": return `${quienInv(de)}: +${numInv(v)} de armadura (cada golpe que reciben les saca ${numInv(v)} menos)`;
+    case "alcance": return `${quienInv(de)}: +${numInv(v)} m de alcance`;
+    case "vida": return `${quienInv(de)}: ${porcInv(v)} de vida`;
+    case "vel": return `${quienInv(de)}: ${porcInv(v)} de velocidad`;
+    case "costo": return `${quienInv(de)}: ${porcInv(v)} de costo`;
+    case "ritmo": return `${porcInv(v)} al juntar ${de}`;
+    case "fuego": return `${quienInv(de)}: sus golpes prenden fuego a edificios y máquinas (cada golpe aviva las llamas; la madera arde entera, la piedra poco)`;
+    case "carga": return `Aldeanos: cargan ${numInv(v)} más por viaje`;
+    case "campoComida": return `Cada campo da ${numInv(v)} de comida más`;
+    case "campoRitmo": return `Cosecha en los campos: ${porcInv(v)}`;
+    case "campoCosto": return `Resembrar un campo: ${porcInv(v)} de costo`;
+    case "campoSiembra": return `Tiempo de siembra: ${porcInv(v)}`;
+    case "obraTiempo": return `Tiempo de construcción: ${porcInv(v)}`;
+    case "entrenarTiempo": return `Tiempo de entrenamiento: ${porcInv(v)}`;
+    case "costoEdificios": return `Costo de los edificios: ${porcInv(v)}`;
+    case "vidaEdificios": return `Vida de los edificios nuevos: ${porcInv(v)}`;
+    case "poblacion": return `Tope de población: +${numInv(v)}`;
+    case "poblacionCasa": return `Cada casa aloja ${numInv(v)} más`;
+    case "vision": return `Tus tropas ven a los enemigos ${numInv(v)} m más lejos y salen a pelear antes`;
+    case "espias": return "Te avisan cuando un rival sale a atacar, no solo cuando ya está cerca";
+    case "fuegoRecibido": return `Tus edificios se queman ${porcInv(v)}`;
+    case "enredo": return `El enredo de las boleadoras dura ${porcInv(v)} (el enredado camina a un tercio y no puede cargar)`;
+    case "yari": return `La infantería sin picas pega ${porcInv(1 + v)} al enemigo que ya está trabado con tus picas`;
+    case "resiembraAuto": return "Los campos agotados se resiembran solos pagando la madera (se apaga desde el depósito de comida)";
+    case "moral": return `Moral de tus tropas: +${numInv(v)}`;
+  }
+  return `${clave}: ${numInv(v)}`;
+}
+function textoFicha(x) {
+  const l = [];
+  let rama = RAMAS_INV[x.rama] || x.rama || "";
+  if (x.grupo && x.rama !== "tradicion" && x.rama !== "tropa") rama += " · " + x.grupo;
+  l.push(`${rama} · edad ${nombreEdad(0, x.edad || 1)}`);
+  l.push(`Cuesta ${Object.entries(x.costo || {}).map(([k, v]) => v + " " + k).join(" · ")} · tarda ${x.t || 0} s`);
+  const [est, porque] = estadoInv(0, x);
+  if (est === "hecha") l.push("Ya la investigaste.");
+  else if (est !== "lista" && porque) l.push("Ahora no se puede: " + porque);
+  if (x.desc) l.push("", x.desc[0].toUpperCase() + x.desc.slice(1) + ".");
+  const ef = Object.entries(x.efectos || {});
+  if (ef.length) { l.push("", "Qué cambia:"); for (const [k, v] of ef) l.push("• " + textoEfecto(k, v)); }
+  const nuevo = x.desbloquea && TIPOS[x.desbloquea];
+  if (nuevo) l.push("", nuevo.unidad ? `Desde que termina se entrena ${nuevo.nombre}, también lo que esté en la cola. Las tropas que ya están en el campo siguen como estaban.` : `Permite construir: ${nuevo.nombre}.`);
+  else if (ef.some(([k]) => ["dano", "armadura", "alcance", "vida", "vel", "vision", "enredo", "yari", "fuego", "moral"].includes(k.split(".")[0])))
+    l.push("", "Vale para las tropas que ya tenés y para las que entrenes después.");
+  if (x.doctrina) {
+    const otras = INV.investigaciones.filter(y => y.doctrina === x.doctrina && y.id !== x.id).map(y => y.nombre);
+    if (otras.length) l.push("", `Doctrina: si la elegís, se ${otras.length === 1 ? "cierra" : "cierran"} ${otras.join(", ")} para esta partida.`);
+  }
+  return l.join("\n");
+}
+function mostrarFicha(x) {
+  const f = document.getElementById("ficha-inv");
+  f.querySelector("h3").textContent = x.nombre; f.querySelector("p").textContent = textoFicha(x); f.hidden = false;
+}
+let mantenerInv = null;
+function seguirMantener() {
+  const m = mantenerInv; if (!m || m.hecho) return;
+  const k = (performance.now() - m.t0) / FICHA_MS;
+  m.b.style.setProperty("--mant", k < 0.08 ? 0 : Math.min(1, k));
+  if (k >= 1) {
+    m.hecho = true; m.b.style.setProperty("--mant", 0);
+    if (navigator.vibrate) try { navigator.vibrate(40); } catch (e) {}
+    if (INV_POR_ID[m.id]) mostrarFicha(INV_POR_ID[m.id]);
+    return;
+  }
+  requestAnimationFrame(seguirMantener);
+}
+(() => {
+  const cont = document.getElementById("entrenar"), ficha = document.getElementById("ficha-inv");
+  ficha.querySelector(".boton").addEventListener("click", () => { ficha.hidden = true; });
+  const soltar = () => { if (mantenerInv) { mantenerInv.b.style.setProperty("--mant", 0); if (!mantenerInv.hecho) mantenerInv = null; } };
+  cont.addEventListener("pointerdown", ev => {
+    const b = [...cont.querySelectorAll("[data-inv]")].find(b => { const q = b.getBoundingClientRect(); return ev.clientX >= q.left && ev.clientX <= q.right && ev.clientY >= q.top && ev.clientY <= q.bottom; });
+    mantenerInv = b ? { b, id: b.dataset.inv, t0: performance.now(), x: ev.clientX, y: ev.clientY, hecho: false } : null;
+    if (b) requestAnimationFrame(seguirMantener);
+  });
+  cont.addEventListener("pointermove", ev => { if (mantenerInv && !mantenerInv.hecho && Math.hypot(ev.clientX - mantenerInv.x, ev.clientY - mantenerInv.y) > 12) soltar(); });
+  window.addEventListener("pointerup", soltar); window.addEventListener("pointercancel", () => { if (mantenerInv && !mantenerInv.hecho) soltar(); });
+  cont.addEventListener("click", ev => { if (mantenerInv && mantenerInv.hecho) { ev.stopPropagation(); ev.preventDefault(); mantenerInv = null; } }, true);   // el que abrió la ficha no investiga
+  cont.addEventListener("contextmenu", ev => ev.preventDefault());
+})();
 const tradicionesDe = k => INV.investigaciones.filter(x => x.rama === "tradicion" && x.cultura === JUG[k].cultura);
 function estadoInv(k, x) {
   const st = INVJ[k];
@@ -4194,7 +4299,7 @@ function actualizarHud(forzar) {
         const [est, porque] = estadoInv(0, x);
         if (est === "hecha" || est === "cerrada") continue;
         const b = document.createElement("button"); b.className = "boton inv" + (x.doctrina ? " doctrina" : "");
-        b.innerHTML = `${x.doctrina ? "◆ " : ""}${x.nombre}<small>${est === "lista" ? precio(x.costo) : porque}</small><small class="desc">${x.desc}</small>`;
+        b.innerHTML = `${x.doctrina ? "◆ " : ""}${x.nombre}<small>${est === "lista" ? precio(x.costo) : porque}</small><small class="desc">${x.desc}</small>`; b.dataset.inv = x.id;
         b.disabled = est !== "lista" || !!investigador.investigando;
         b.addEventListener("click", () => {
           if (!investigar(0, investigador, x, c => puede(c) && (pagar(c), true))) aviso(investigador.investigando ? "Ya está investigando" : "Faltan recursos", 1600);
@@ -4211,7 +4316,7 @@ function actualizarHud(forzar) {
         const [est, porque] = estadoInv(0, x);
         if (est === "hecha" || est === "cerrada") continue;
         const b = document.createElement("button"); b.className = "boton inv" + (x.doctrina ? " doctrina" : "");
-        b.innerHTML = `${x.doctrina ? "◆ " : ""}${x.nombre}<small>${est === "lista" ? precio(x.costo) : porque}</small><small class="desc">${x.desc}</small>`;
+        b.innerHTML = `${x.doctrina ? "◆ " : ""}${x.nombre}<small>${est === "lista" ? precio(x.costo) : porque}</small><small class="desc">${x.desc}</small>`; b.dataset.inv = x.id;
         b.disabled = est !== "lista" || !!fabrica.investigando || !!fabrica.avance;
         b.addEventListener("click", () => {
           if (!investigar(0, fabrica, x, c => puede(c) && (pagar(c), true))) aviso(fabrica.investigando ? "Ya está investigando" : "Faltan recursos", 1600);
@@ -4236,7 +4341,7 @@ function actualizarHud(forzar) {
           if (!investigar(0, fabrica, x, c => puede(c) && (pagar(c), true))) aviso(fabrica.investigando ? "Ya está mejorando algo" : "Faltan recursos", 1600);
           actualizarHud(true);
         });
-        b.classList.add("inv", "mejora"); b.disabled = est !== "lista" || !!fabrica.investigando;
+        b.classList.add("inv", "mejora"); b.dataset.inv = x.id; b.disabled = est !== "lista" || !!fabrica.investigando;
       }
       const sigEdad = requisitoEdad(0);
       if (fabrica === centroJugador() && sigEdad) {

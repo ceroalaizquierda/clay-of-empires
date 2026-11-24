@@ -817,7 +817,7 @@
    "tropa": "facon",
    "grupo": "Tropa",
    "nombre": "Lanza criolla",
-   "desc": "el gaucho ata el facón a una caña: pasa a gaucho lancero (más alcance y picas contra la caballería); los que ya tenés también",
+   "desc": "el gaucho ata el facón a una caña: pasa a gaucho lancero (más alcance y picas contra la caballería)",
    "edad": 1,
    "costo": {
     "comida": 150,
@@ -834,7 +834,7 @@
    "tropa": "nobushi",
    "grupo": "Tropa",
    "nombre": "Leva de ashigaru",
-   "desc": "los nobushi reciben yari y forman en filas: pasan a ashigaru (más alcance y picas contra la caballería); los que ya tenés también",
+   "desc": "los nobushi reciben yari y forman en filas: pasan a ashigaru (más alcance y picas contra la caballería)",
    "edad": 1,
    "costo": {
     "comida": 150,
