@@ -1061,7 +1061,7 @@ function dibujarRangos() {
 // ------------------------------------------------------------------ métricas para reportes
 // Se juntan mientras se juega (barato: tres números por cuadro y un resumen por segundo) y se
 // envían a la base del prototipo con "Enviar reporte". Claude las lee desde su sesión.
-const VERSION_PROTO = "2026-11-24 · v72 (etapas de tropa: el gaucho del facón pasa a lancero y el nobushi a ashigaru; lanzas con estocada; jinetes que atacan sin mover el caballo)";
+const VERSION_PROTO = "2026-11-24 · v73 (las tropas que ya están en el campo no evolucionan: solo las que salen después de la investigación; poncho de tela)";
 const metr = { inicio: performance.now(), cuadros: [], segundos: [], todos: [], errores: [], trabas: [], golpesVacios: 0, caminaQuieto: 0, ultimoSeg: performance.now() };
 function medirCuadro(dtMs, simMs, dibMs) {
   metr.cuadros.push([dtMs, simMs, dibMs]);
@@ -3707,16 +3707,13 @@ const costoEdificio = (k, tipo) => { const m = multM(k, "costoEdificios"); retur
 const desbloqueado = (k, tipo) => (INV.desbloqueo[tipo] || 1) <= edadDe(k) && (!TIPOS[tipo] || !TIPOS[tipo].permite || sumaM(k, "permite." + TIPOS[tipo].permite) > 0)
   && !(TIPOS[tipo] && TIPOS[tipo].evoluciona && evolucionado(k, tipo));
 // etapas de una tropa (v): el gaucho del facón pasa a gaucho lancero, el nobushi a ashigaru. La etapa vieja deja
-// de entrenarse cuando se investiga la nueva (su `permite`), y las que ya existen se convierten.
+// de entrenarse cuando se investiga la nueva (su `permite`). Las que ya están en el campo siguen como estaban (v73):
+// solo salen de la etapa nueva las próximas, incluidas las que estaban en cola (todavía no salieron).
 const evolucionado = (k, tipo) => { const a = TIPOS[tipo].evoluciona; return !!a && sumaM(k, "permite." + (TIPOS[a].permite || a)) > 0; };
 const etapaPrevia = tipo => Object.keys(TIPOS).find(t => TIPOS[t].evoluciona === tipo) || null;
 // lo que un jugador entrena hoy en lugar de `tipo` (la etapa anterior, si todavía no evolucionó)
 const etapaActual = (k, tipo) => { const p = etapaPrevia(tipo); return p && !desbloqueado(k, tipo) && desbloqueado(k, p) ? p : tipo; };
 function evolucionar(k, de, a) {
-  for (const e of ents) if (e.equipo === k && e.tipo === de && !e.muerto) {
-    const parte = e.vida / vidaMax(e);
-    e.tipo = a; e.T = TIPOS[a]; e.vidaMax = vidaMaxDe(e); e.vida = parte * e.vidaMax;
-  }
   for (const f of ents) if (f.equipo === k && f.cola) for (const q of f.cola) if (q.tipo === de) q.tipo = a;
   for (const i of ias) if (i.jug === k) for (const q of Object.values(i.prod)) if (q && q.tipo === de) q.tipo = a;
 }
@@ -3770,7 +3767,7 @@ function completarInvestigacion(k, x) {
   if (x.desbloquea) INVJ[k].suma["permite." + x.desbloquea] = 1;
   const previa = x.desbloquea && TIPOS[x.desbloquea] && etapaPrevia(x.desbloquea);
   if (previa) evolucionar(k, previa, x.desbloquea);
-  if (k === 0) { aviso(previa ? `${x.nombre} lista: el ${TIPOS[previa].nombre.toLowerCase()} ahora es ${TIPOS[x.desbloquea].nombre.toLowerCase()}` : `Investigación terminada: ${x.nombre}`, 2600); actualizarHud(true); }
+  if (k === 0) { aviso(previa ? `${x.nombre} lista: desde ahora se entrena el ${TIPOS[x.desbloquea].nombre.toLowerCase()}` : `Investigación terminada: ${x.nombre}`, 2600); actualizarHud(true); }
 }
 function requisitoEdad(k) { return INV.edades[edadDe(k)] || null; }          // la próxima edad (o null)
 function avanzarEdad(k, f, pagarCon) {
