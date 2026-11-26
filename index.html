@@ -1072,7 +1072,7 @@ function dibujarRangos() {
 // ------------------------------------------------------------------ métricas para reportes
 // Se juntan mientras se juega (barato: tres números por cuadro y un resumen por segundo) y se
 // envían a la base del prototipo con "Enviar reporte". Claude las lee desde su sesión.
-const VERSION_PROTO = "2026-11-24 · v74 (ficha de cada investigación manteniendo apretado su botón 3 s)";
+const VERSION_PROTO = "2026-11-25 · v75 (balance: etapa II de infantería a 50 y boleador a 55)";
 const metr = { inicio: performance.now(), cuadros: [], segundos: [], todos: [], errores: [], trabas: [], golpesVacios: 0, caminaQuieto: 0, ultimoSeg: performance.now() };
 function medirCuadro(dtMs, simMs, dibMs) {
   metr.cuadros.push([dtMs, simMs, dibMs]);

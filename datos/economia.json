@@ -9,12 +9,12 @@
    "madera": 10
   },
   "lancero": {
-   "comida": 40,
-   "madera": 25
+   "comida": 35,
+   "madera": 15
   },
   "boleador": {
-   "comida": 45,
-   "madera": 30
+   "comida": 35,
+   "madera": 20
   },
   "jinete": {
    "comida": 60,
@@ -28,8 +28,8 @@
    "madera": 10
   },
   "enemigo": {
-   "comida": 40,
-   "madera": 25
+   "comida": 35,
+   "madera": 15
   },
   "arquero": {
    "comida": 35,
@@ -253,8 +253,8 @@
     "madera": 10
    },
    "enemigo": {
-    "comida": 40,
-    "madera": 25
+    "comida": 35,
+    "madera": 15
    },
    "arquero": {
     "comida": 35,
@@ -265,12 +265,12 @@
     "madera": 10
    },
    "lancero": {
-    "comida": 40,
-    "madera": 25
+    "comida": 35,
+    "madera": 15
    },
    "boleador": {
-    "comida": 45,
-    "madera": 30
+    "comida": 35,
+    "madera": 20
    },
    "jinete": {
     "comida": 60,
