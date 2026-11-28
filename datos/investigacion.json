@@ -747,7 +747,7 @@
    "cultura": "plas",
    "grupo": "Tradición",
    "nombre": "Tacuara",
-   "desc": "lanza criolla de caña: el gaucho lancero cuesta 20% menos pero tiene 10% menos de vida",
+   "desc": "lanza criolla de caña: el gaucho lancero cuesta 15% menos pero tiene 15% menos de vida",
    "edad": 1,
    "costo": {
     "comida": 60,
@@ -755,8 +755,8 @@
    },
    "t": 25,
    "efectos": {
-    "costo.lancero": 0.8,
-    "vida.lancero": 0.9
+    "costo.lancero": 0.85,
+    "vida.lancero": 0.85
    }
   },
   {
